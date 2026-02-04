@@ -1,0 +1,23 @@
+{
+  "name": "sugarrush_backend",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/server.ts",
+  "scripts": {
+    "dev": "set NODE_ENV=development&& ts-node-dev --respawn src/server.ts",
+    "build": "tsc && node scripts/copy-data.js",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.1.5",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
