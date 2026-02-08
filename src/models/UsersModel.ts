@@ -1,8 +1,8 @@
 import { Schema, model } from "mongoose";
-import { IUser } from "../interfaces/IUsers";
+import { IUsers } from "../interfaces/IUsers";
 import { regex } from "../utils/regex";
 
-const userSchema = new Schema<IUser>({
+const userSchema = new Schema<IUsers>({
   username: {
     type: String,
     required: true,
@@ -29,4 +29,4 @@ const userSchema = new Schema<IUser>({
   updated_at: { type: Date, default: () => new Date() },
 });
 
-export const UserModel = model<IUser>("User", userSchema);
+export const UserModel = model<IUsers>("User", userSchema);

@@ -1,0 +1,26 @@
+{
+  "app": { "basePath": "/api" },
+  "server": {
+    "http": { "enabled": true, "port": 3000 },
+    "https": {
+      "enabled": true,
+      "port": 3443,
+      "redirectAllHttpToHttps": true
+    },
+    "trustProxy": true
+  },
+  "db": {
+    "uri": "mongodb+srv://admin:admin123@test.npu9g0a.mongodb.net/GreenHand_Prod"
+  },
+  "security": {
+    "jwt": { "secret": "prod-secret", "expiresIn": "2h" },
+    "cors": {
+       "origins": ["http://localhost:3000", "https://localhost:3443"]
+    },
+    "rateLimit": { "windowMs": 900000, "max": 80 }
+  },
+  "ssl": {
+    "keyPath": "./cert/server.key",
+    "certPath": "./cert/server.cert"
+  }
+}

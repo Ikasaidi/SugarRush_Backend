@@ -1,0 +1,24 @@
+{
+  "app": { "basePath": "/api" },
+  "server": {
+    "http": { "enabled": true, "port": 3000 },
+    "https": {
+      "enabled": false,
+      "port": 3443,
+      "redirectAllHttpToHttps": false
+    },
+    "trustProxy": false
+  },
+  "db": {
+    "uri": "mongodb+srv://admin:admin123@test.npu9g0a.mongodb.net/GreenHand?retryWrites=true&w=majority"
+  },
+  "security": {
+    "jwt": { "secret": "dev-secret", "expiresIn": "2h" },
+    "cors": {  "origins": ["http://localhost:3000", "https://localhost:3443"] },
+    "rateLimit": { "windowMs": 900000, "max": 100 }
+  }, 
+   "ssl": {
+    "keyPath": "./cert/server.key",
+    "certPath": "./cert/server.cert"
+  }
+}

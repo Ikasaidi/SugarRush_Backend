@@ -1,9 +1,73 @@
-import express, { Request, Response } from "express";
+import express from "express";
+import dotenv from "dotenv";
+import authRoute from "./routes/authRoute";
+import cors from "cors";
+import config from "config";
+import userRoute from "./routes/userRoute";
+import c from "config";
+import rateLimit , {RateLimitRequestHandler}from "express-rate-limit";
 
+dotenv.config();
 const app = express();
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Welcome to SugarRush");
+// app.use(express.json()); 
+
+/// Pour povoir envoyer des images en base64 (taille max augmentée) ///
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// Configuration CORS - DOIT être avant les routes
+const corsOrigins = config.get<string[]>("security.cors.origins");
+app.use(cors({
+  origin: (origin, callback) => {
+    // Autoriser les requêtes sans origine (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Autoriser les origines configurées
+    if (corsOrigins.includes(origin) || corsOrigins.includes("*")) {
+      return callback(null, true);
+    }
+    
+    // Pour le développement, autoriser localhost et 127.0.0.1 sur n'importe quel port
+    if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      return callback(null, true);
+    }
+    
+    callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// -----------------------------------------------------------
+//  RATE LIMITING
+// -----------------------------------------------------------
+const rateConfig = config.get<{
+  windowMs: number;
+  max: number;
+}>("security.rateLimit");
+
+const limiter: RateLimitRequestHandler = rateLimit({
+  windowMs: rateConfig.windowMs,
+  max: rateConfig.max,
+  message: "Trop de requêtes, réessayez plus tard.",
 });
+
+
+
+//------------ ROUTES ------------//
+// Home
+app.get("/", (req, res) => {
+  res.send(` 
+  `);
+});
+
+// Auth 
+app.use("/api/auth", limiter, authRoute);
+
+// user
+app.use("/api/users", userRoute);
+
 
 export default app;
