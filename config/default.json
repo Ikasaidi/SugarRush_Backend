@@ -10,7 +10,7 @@
     "trustProxy": false
   },
   "db": {
-    "uri": "mongodb://localhost:27017/GreenHand"
+    "uri": "mongodb://localhost:27017/sugarRush"
   },
   "security": {
     "jwt": { "secret": "default-secret-change-me", "expiresIn": "1h" },

@@ -10,7 +10,7 @@
     "trustProxy": false
   },
   "db": {
-    "uri": "mongodb+srv://admin:admin123@test.npu9g0a.mongodb.net/GreenHand?retryWrites=true&w=majority"
+    "uri": "mongodb+srv://admin:<db_password>@sugarrushdb.sqml5vq.mongodb.net/"
   },
   "security": {
     "jwt": { "secret": "dev-secret", "expiresIn": "2h" },
