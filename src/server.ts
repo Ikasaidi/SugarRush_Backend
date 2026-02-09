@@ -97,8 +97,8 @@ const startServer = async () => {
       // app.listen(httpPort, () => {
       //   console.log(`Serveur lancé sur http://localhost:${httpPort}`);
       // });
-      app.listen(httpPort, "0.0.0.0", () => {
-        console.log(`Serveur lancé sur http://0.0.0.0:${httpPort}`);
+      app.listen(httpPort, "10.10.23.74", () => {
+        console.log(`Serveur lancé sur http://10.10.23.74:${httpPort}`);
       });
 
       /// pour acces reseau local ///

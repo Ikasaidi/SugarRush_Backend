@@ -4,11 +4,14 @@ import authRoute from "./routes/authRoute";
 import cors from "cors";
 import config from "config";
 import userRoute from "./routes/userRoute";
+import iotEventsRoutes from "./routes/iotEventsRoute";
 import c from "config";
 import rateLimit , {RateLimitRequestHandler}from "express-rate-limit";
 
 dotenv.config();
 const app = express();
+app.use(cors());
+app.use(express.json());
 
 // app.use(express.json()); 
 
@@ -68,6 +71,8 @@ app.use("/api/auth", limiter, authRoute);
 
 // user
 app.use("/api/users", userRoute);
+
+app.use("/api/iot", iotEventsRoutes);
 
 
 export default app;
