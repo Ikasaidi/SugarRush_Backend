@@ -10,7 +10,7 @@
     "trustProxy": false
   },
   "db": {
-    "uri": "mongodb+srv://admin:<db_password>@sugarrushdb.sqml5vq.mongodb.net/"
+    "uri": "mongodb+srv://admin:testabc123@sugarrushdb.sqml5vq.mongodb.net/sugarRush"
   },
   "security": {
     "jwt": { "secret": "dev-secret", "expiresIn": "2h" },

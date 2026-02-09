@@ -1,10 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
-import authRoute from "./routes/authRoute";
-import cors from "cors";
+import authRoute from "./routes/AuthRoute"
 import config from "config";
-import userRoute from "./routes/userRoute";
+import userRoute from "./routes/UserRoute";
+import QrCodeRoute from "./routes/QrCodeRoute"
 import c from "config";
+import cors from "cors";
+import bodyParser from 'body-parser';
 import rateLimit , {RateLimitRequestHandler}from "express-rate-limit";
 
 dotenv.config();
@@ -54,6 +56,12 @@ const limiter: RateLimitRequestHandler = rateLimit({
   message: "Trop de requêtes, réessayez plus tard.",
 });
 
+// -----------------------------------------------------------
+//  MIDDLEWARE
+// -----------------------------------------------------------
+app.use(bodyParser.json());
+
+
 
 
 //------------ ROUTES ------------//
@@ -68,6 +76,9 @@ app.use("/api/auth", limiter, authRoute);
 
 // user
 app.use("/api/users", userRoute);
+
+//QR Code
+app.use('/api/qr-code', QrCodeRoute);
 
 
 export default app;

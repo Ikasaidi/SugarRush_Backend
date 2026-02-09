@@ -4,7 +4,7 @@
 // ===========================================================
 
 import { Router } from "express";
-import { AuthController } from "../controllers/authController";
+import { AuthController } from "../controllers/AuthController";
 import { authMiddleware } from "../middlewares/authMiddleWare";
 import {
   validateRegister,

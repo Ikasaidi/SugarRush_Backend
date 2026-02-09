@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthService } from "../services/authService";
+import { AuthService } from "../services/AuthService";
 import { logger } from "../utils/logger";
 import { HttpException } from "../utils/http-exception";
 
