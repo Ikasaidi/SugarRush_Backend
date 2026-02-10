@@ -1,7 +1,7 @@
 {
   "app": { "basePath": "/api" },
   "server": {
-    "http": { "enabled": true, "port": 3000 },
+    "http": { "enabled": true, "port": 9696 },
     "https": {
       "enabled": true,
       "port": 3443,
@@ -15,7 +15,7 @@
   "security": {
     "jwt": { "secret": "prod-secret", "expiresIn": "2h" },
     "cors": {
-       "origins": ["http://localhost:3000", "https://localhost:3443"]
+       "origins": ["http://localhost:9696", "https://localhost:3443"]
     },
     "rateLimit": { "windowMs": 900000, "max": 80 }
   },

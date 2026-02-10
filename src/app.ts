@@ -62,7 +62,7 @@ const limiter: RateLimitRequestHandler = rateLimit({
 //------------ ROUTES ------------//
 // Home
 app.get("/", (req, res) => {
-  res.send(` 
+  res.send(` helloo
   `);
 });
 
