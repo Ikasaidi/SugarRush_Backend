@@ -12,6 +12,7 @@ import path from "path";
 import http from "http";
 import https from "https";
 import {connectDB} from "./data/connectDB"
+import { startPiPolling } from "./iot/piPoller";
 
 // Debug rapide : voir l'environnement courant
 console.log("ENV:", process.env.NODE_ENV);
@@ -65,6 +66,7 @@ const startServer = async () => {
     // 1) DB
     console.log("db import:", connectDB);
     await connectDB();
+    startPiPolling();
 
     // // 2) HTTPS (si activé dans la config)
     if (enableHttps) {
@@ -100,7 +102,7 @@ const startServer = async () => {
       app.listen(httpPort, "0.0.0.0", () => {
         console.log(`Serveur lancé sur http://0.0.0.0:${httpPort}`);
       });
-
+  
       /// pour acces reseau local ///
       //  app.listen(httpPort, "0.0.0.0", () => {
       //   console.log(`Serveur lancé sur http://192.168.68.105:${httpPort}`);

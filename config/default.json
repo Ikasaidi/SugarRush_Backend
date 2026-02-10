@@ -1,7 +1,7 @@
 {
   "app": { "basePath": "/api" },
   "server": {
-    "http": { "enabled": true, "port": 3000 },
+    "http": { "enabled": true, "port": 9696 },
     "https": {
       "enabled": false,
       "port": 3443,
@@ -10,11 +10,11 @@
     "trustProxy": false
   },
   "db": {
-    "uri": "mongodb://localhost:27017/GreenHand"
+    "uri": "mongodb://localhost:27017/sugarRush"
   },
   "security": {
     "jwt": { "secret": "default-secret-change-me", "expiresIn": "1h" },
-    "cors": {  "origins": ["http://localhost:3000"] },
+    "cors": {  "origins": ["http://localhost:9696"] },
     "rateLimit": { "windowMs": 900000, "max": 100 }
   },
   "ssl": {
