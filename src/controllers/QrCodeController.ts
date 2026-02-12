@@ -16,12 +16,11 @@ export const createQrCodeHandler = async (req: Request, res: Response): Promise<
       message: 'QR Code successfully created',
       qr_code: qrCode,
     });
-  } catch (error: unknown) { 
+  } catch (error: unknown) {
     const typedError = error as Error;
-
     res.status(500).json({
       message: 'Error generating QR code',
-      error: typedError.message, 
+      error: typedError.message,
     });
   }
 };
