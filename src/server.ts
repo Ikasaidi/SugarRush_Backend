@@ -12,6 +12,7 @@ import path from "path";
 import http from "http";
 import https from "https";
 import {connectDB} from "./data/connectDB"
+import { startQrPiPolling } from "./pollers/qrPiPolling";
 
 // Debug rapide : voir l'environnement courant
 console.log("ENV:", process.env.NODE_ENV);
@@ -65,6 +66,10 @@ const startServer = async () => {
     // 1) DB
     console.log("db import:", connectDB);
     await connectDB();
+
+     //LANCER LE POLLING QR
+    startQrPiPolling();
+    console.log("QR Pi polling started");
 
     // // 2) HTTPS (si activé dans la config)
     if (enableHttps) {

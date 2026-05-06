@@ -1,9 +1,12 @@
-import { Router } from 'express';
-import { createQrCodeHandler } from '../controllers/QrCodeController';
+import { Router } from "express";
+import {
+  createQrCodeHandler,
+  validateQrCodeHandler,
+} from "../controllers/QrCodeController";
 
 const router = Router();
 
-// Route to generate a new QR code
-router.post('/generate', createQrCodeHandler);
+router.post("/generate", createQrCodeHandler);
+router.post("/validate", validateQrCodeHandler);
 
 export default router;
