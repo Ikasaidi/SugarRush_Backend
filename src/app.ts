@@ -4,6 +4,7 @@ import authRoute from "./routes/authRoute"
 import config from "config";
 import userRoute from "./routes/userRoute";
 import QrCodeRoute from "./routes/QrCodeRoute"
+import iotEventsRoutes from "./routes/iotEventsRoute";
 import c from "config";
 import cors from "cors";
 import bodyParser from 'body-parser';
@@ -11,6 +12,8 @@ import rateLimit , {RateLimitRequestHandler}from "express-rate-limit";
 
 dotenv.config();
 const app = express();
+app.use(cors());
+app.use(express.json());
 
 // app.use(express.json()); 
 
@@ -67,7 +70,7 @@ app.use(bodyParser.json());
 //------------ ROUTES ------------//
 // Home
 app.get("/", (req, res) => {
-  res.send(` 
+  res.send(` helloo
   `);
 });
 
@@ -79,6 +82,7 @@ app.use("/api/users", userRoute);
 
 //QR Code
 app.use('/api/qr-code', QrCodeRoute);
+app.use("/api/iot", iotEventsRoutes);
 
 
 export default app;
