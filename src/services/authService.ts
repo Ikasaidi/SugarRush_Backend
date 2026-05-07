@@ -2,6 +2,7 @@ import { UserModel } from "../models/UsersModel";
 import { HttpException } from "../utils/http-exception";
 import { comparePassword } from "../utils/bcryptHelp";
 import { generateToken } from "../utils/jwtHelp";
+import { WalletModel } from "../models/WalletModel";
 
 // ===========================================================
 // AUTH SERVICE
@@ -9,8 +10,6 @@ import { generateToken } from "../utils/jwtHelp";
 // ===========================================================
 
 export class AuthService {
-
-
   // ---------------------------------------------------------
   // REGISTER
   // - Crée un Users si l'email n'existe pas encore
@@ -24,14 +23,13 @@ export class AuthService {
     user_type: "student" | "adult" | "senior";
   }) {
     const exists = await UserModel.findOne({ email: data.email });
-    if (exists) 
-        throw new HttpException(409, "Cet email est déjà enregistré");
+    if (exists) throw new HttpException(409, "Cet email est déjà enregistré");
 
     const created = await UserModel.create({
-      email: data.email,
-      username: data.username,
-      password: data.password,
-        user_type: data.user_type
+      email: data.email.trim().toLowerCase(),
+      username: data.username.trim(),
+      password: data.password.trim(),
+      user_type: data.user_type,
     });
 
     // retour sans password
@@ -49,14 +47,13 @@ export class AuthService {
   // - 401 si invalide, sinon renvoie un JWT + infos Users
   // ---------------------------------------------------------
   async login(email: string, password: string) {
+    const cleanEmail = email.trim().toLowerCase();
 
-    const user = await UserModel.findOne({ email });
-    if (!user) 
-        throw new HttpException(401, "Identifiants invalides");
+    const user = await UserModel.findOne({ email: cleanEmail });
+    if (!user) throw new HttpException(401, "Identifiants invalides");
 
-    const ok = await comparePassword(password, user.password);
-    if (!ok) 
-        throw new HttpException(401, "Identifiants invalides");
+    const ok = await comparePassword(password.trim(), user.password);
+    if (!ok) throw new HttpException(401, "Identifiants invalides");
 
     const token = generateToken({
       id: user._id,
@@ -69,9 +66,7 @@ export class AuthService {
         id: user._id,
         email: user.email,
         username: user.username,
-      }, 
+      },
     };
   }
-
 }
-

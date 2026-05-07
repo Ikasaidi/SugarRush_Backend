@@ -31,10 +31,19 @@ export const createQrCode = async (
 ): Promise<IQrCode> => {
   const { user_id } = input;
 
+  console.log("QR GENERATION REQUEST FOR USER ID:", user_id);
+
   const user = await UserModel.findById(user_id);
   if (!user) {
+    console.log("QR GENERATION FAILED - USER NOT FOUND:", user_id);
     throw new Error("This user has not been found");
   }
+
+  console.log("QR GENERATED FOR USER:", {
+    id: user._id.toString(),
+    email: user.email,
+    username: user.username,
+  });
 
   const qrPayload = {
     user_id: user._id.toString(),
@@ -43,6 +52,9 @@ export const createQrCode = async (
   };
 
   const qrPayloadString = JSON.stringify(qrPayload);
+
+  console.log("QR PAYLOAD CREATED:", qrPayloadString);
+
   const qrUrl = await generateQRCode(qrPayloadString);
 
   const newQrCode = new QrCodeModel({
@@ -54,35 +66,76 @@ export const createQrCode = async (
   });
 
   await newQrCode.save();
+
+  console.log("QR SAVED IN DATABASE:", {
+    qr_id: newQrCode._id,
+    user_id: user._id.toString(),
+  });
+
   return newQrCode;
 };
 
 export const validateScannedQr = async (
   qrRawData: string,
 ): Promise<IValidateQrCodeResult> => {
+  console.log("QR SCANNED RAW DATA:", qrRawData);
+
   let parsed: any;
 
   try {
     parsed = JSON.parse(qrRawData);
+    console.log("QR PARSED DATA:", parsed);
   } catch (error) {
+    console.log("QR SCAN FAILED - INVALID JSON:", qrRawData);
     throw new Error("Invalid QR format");
   }
 
-  const { user_id, type } = parsed;
+  const { user_id, type, issued_at } = parsed;
+
+  console.log("QR SCAN INFO:", {
+    user_id,
+    type,
+    issued_at,
+  });
 
   if (!user_id || type !== "train_access") {
+    console.log("QR SCAN FAILED - INVALID CONTENT:", parsed);
     throw new Error("Invalid QR content");
   }
 
   const user = await UserModel.findById(user_id);
+
   if (!user) {
+    console.log("QR SCANNED BUT USER NOT FOUND:", user_id);
     throw new Error("User not found");
   }
 
+  console.log("QR SCANNED USER FOUND:", {
+    id: user._id.toString(),
+    email: user.email,
+    username: user.username,
+  });
+
   const wallet = await WalletModel.findOne({ user_id: user._id });
+
   if (!wallet) {
-    throw new Error("Wallet not found");
+    console.log("QR SCAN OK - BUT WALLET NOT FOUND FOR USER:", {
+      id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+    });
+
+    return {
+      allowed: false,
+      message: "QR scanned successfully, but wallet not found",
+    };
   }
+
+  console.log("WALLET FOUND FOR SCANNED QR:", {
+    user_id: user._id.toString(),
+    free_ticket_balance: wallet.free_ticket_balance,
+    paid_ticket_balance: wallet.paid_ticket_balance,
+  });
 
   let usedTicketType: "free" | "paid" | undefined;
 
@@ -93,6 +146,14 @@ export const validateScannedQr = async (
     wallet.paid_ticket_balance -= 1;
     usedTicketType = "paid";
   } else {
+    console.log("QR SCAN OK - USER HAS NO TICKETS:", {
+      user_id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      free_ticket_balance: wallet.free_ticket_balance,
+      paid_ticket_balance: wallet.paid_ticket_balance,
+    });
+
     return {
       allowed: false,
       message: "Not enough tickets",
@@ -103,6 +164,15 @@ export const validateScannedQr = async (
 
   wallet.updated_at = new Date();
   await wallet.save();
+
+  console.log("QR ACCESS GRANTED:", {
+    user_id: user._id.toString(),
+    email: user.email,
+    username: user.username,
+    usedTicketType,
+    remaining_free_tickets: wallet.free_ticket_balance,
+    remaining_paid_tickets: wallet.paid_ticket_balance,
+  });
 
   return {
     allowed: true,

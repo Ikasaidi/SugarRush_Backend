@@ -37,34 +37,44 @@ export function startQrPiPolling() {
 
       const now = Date.now();
       const isSameQr = data.qr_data === lastQrData;
-      const tooSoon = now - lastQrProcessedAt < SAME_QR_COOLDOWN_MS;
+      const tooSoon =
+        now - lastQrProcessedAt < SAME_QR_COOLDOWN_MS;
 
       if (isSameQr && tooSoon) {
         console.log("Duplicate QR ignored:", data.qr_data);
+
         // IMPORTANT : clear pour éviter boucle infinie
-        await postPiData(`${IOT_DEVICES.qrPi.baseUrl}/qr-clear`);
+        await postPiData(
+          `${IOT_DEVICES.qrPi.baseUrl}/qr-clear`
+        );
 
         return;
       }
 
       isProcessing = true;
+
       lastQrData = data.qr_data;
       lastQrProcessedAt = now;
 
       console.log("New QR from Pi:", data.qr_data);
 
       const result = await validateScannedQr(data.qr_data);
+
       console.log("Validation result:", result);
 
-      await postPiData(`${IOT_DEVICES.qrPi.baseUrl}/qr-result`, {
-        allowed: result.allowed,
-      });
+      await postPiData(
+        `${IOT_DEVICES.qrPi.baseUrl}/qr-result`,
+        {
+          allowed: result.allowed,
+        }
+      );
 
       const clearResult = await postPiData(
         `${IOT_DEVICES.qrPi.baseUrl}/qr-clear`
       );
 
       console.log("QR cleared on Pi:", clearResult);
+
     } catch (err: any) {
       if (!piWasDown) {
         console.log(
@@ -73,6 +83,7 @@ export function startQrPiPolling() {
           "-",
           err?.message || err
         );
+
         piWasDown = true;
       }
     } finally {

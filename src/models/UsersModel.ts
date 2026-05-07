@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { IUsers } from "../interfaces/IUsers";
+import bcrypt from "bcrypt";
 import { regex } from "../utils/regex";
 
 const userSchema = new Schema<IUsers>({
@@ -25,8 +26,15 @@ const userSchema = new Schema<IUsers>({
     enum: ["student", "adult", "senior"],
     required: true,
   },
-  created_at: { type: Date, default: () => new Date() },
-  updated_at: { type: Date, default: () => new Date() },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
+});
+
+userSchema.pre("save", async function (this: any) {
+  if (!this.isModified("password")) return;
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 export const UserModel = model<IUsers>("User", userSchema);
