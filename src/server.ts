@@ -12,7 +12,7 @@ import path from "path";
 import http from "http";
 import https from "https";
 import {connectDB} from "./data/connectDB"
-import { startQrPiPolling } from "./pollers/qrPiPolling";
+// import { startQrPiPolling } from "./pollers/qrPiPolling";
 import { startPiPolling } from "./iot/piPoller";
 
 // Debug rapide : voir l'environnement courant
@@ -69,9 +69,9 @@ const startServer = async () => {
     await connectDB();
     startPiPolling();
 
-     //LANCER LE POLLING QR
-    startQrPiPolling();
-    console.log("QR Pi polling started");
+    //  //LANCER LE POLLING QR
+    // startQrPiPolling();
+    // console.log("QR Pi polling started");
 
     // // 2) HTTPS (si activé dans la config)
     if (enableHttps) {
