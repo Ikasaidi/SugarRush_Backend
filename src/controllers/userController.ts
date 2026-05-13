@@ -1,79 +1,87 @@
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/UserService";
 
-// USER CONTROLLER
-// - Expose les handlers HTTP pour l'utilisateur courant
-// - Nécessite authMiddleware (req.user.id)
-
 const userService = new UserService();
 
 export class UserController {
 
+  // ====================================================
   // GET /api/users/me
-  // - Retourne les infos du compte (sans password)
-  
+  // ====================================================
   me = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as string;
+      const userId = (req as any).user?.id;
       const user = await userService.getById(userId);
-      res.status(200).json({ success: true, user });
+
+      res.status(200).json({
+        success: true,
+        user,
+      });
+
     } catch (err) {
       next(err);
     }
   };
 
-  
+  // ====================================================
   // PATCH /api/users/me
-  // - Met à jour username/password
-  // - validateUserUpdate protège les entrées
-
+  // ====================================================
   updateMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user?.id;
 
-    
-      const { username, fname, lname, phone, address, password } = req.body;
+      // Filtrer les champs réellement envoyés
+      const allowed = ["username", "fname", "lname", "phone", "address", "password", "user_type"];
+      const data: any = {};
 
-      const updated = await userService.updateUser(userId, {
-        username,
-        fname,
-        lname,
-        phone,
-        address,
-        password,
+      for (const key of allowed) {
+        if (req.body[key] !== undefined && req.body[key] !== null) {
+          data[key] = req.body[key];
+        }
+      }
+
+      const updatedUser = await userService.updateUser(userId, data);
+
+      res.status(200).json({
+        success: true,
+        user: updatedUser,
       });
 
-      res.status(200).json(updated);
     } catch (err) {
       next(err);
     }
   };
 
+  // ====================================================
   // DELETE /api/users/me
-  // - Supprime le compte courant
- 
+  // ====================================================
   deleteMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as string;
+      const userId = (req as any).user?.id;
 
-       console.log("DELETE /users/me called");
-      console.log("User ID from token:", userId);
       await userService.deleteUser(userId);
-      res.status(200).json({ success: true });
+
+      res.status(200).json({
+        success: true,
+        message: "Compte supprimé",
+      });
+
     } catch (err) {
       next(err);
     }
   };
 
-
+  // ====================================================
   // POST /api/users/logout
-  // - Logout stateless: côté client, retirer le token
-
+  // ====================================================
   logout = async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      // JWT stateless: côté client, supprimer le token (localStorage/cookie)
-      const result = await userService.logout();
-      res.status(200).json(result);
+      // JWT stateless → juste dire OK
+      res.status(200).json({
+        success: true,
+        message: "Déconnecté",
+      });
+
     } catch (err) {
       next(err);
     }

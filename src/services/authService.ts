@@ -1,120 +1,142 @@
+import mongoose from "mongoose";
 import { UserModel } from "../models/UsersModel";
+import { WalletModel } from "../models/WalletModel";
 import { HttpException } from "../utils/http-exception";
 import { comparePassword } from "../utils/bcryptHelp";
 import { generateToken } from "../utils/jwtHelp";
-import { WalletModel } from "../models/WalletModel";
-import mongoose from "mongoose";
-
-// ===========================================================
-// AUTH SERVICE
-// ===========================================================
 
 export class AuthService {
-async register(data: {
+
+  // ======================================================
+  // REGISTER
+  // ======================================================
+
+  async register(data: {
     email: string;
     username: string;
     password: string;
-    user_type: "student" | "adult" | "senior";
+    user_type: "student" | "adult" | "senior" | "admin";
+    fname: string;
+    lname: string;
+    phone: string;
+    address: string;
   }) {
+
     const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
-      console.log("REGISTER START - Email:", data.email);
 
-      // Vérification existence
-      const exists = await UserModel.findOne({
-        email: data.email.toLowerCase().trim(),
-      }).session(session);
+      session.startTransaction();
 
-      if (exists) {
-        throw new HttpException(409, "Cet email est déjà enregistré");
+      const cleanEmail = data.email.trim().toLowerCase();
+
+      // Vérifie si email déjà utilisé
+      const existingUser = await UserModel.findOne({
+        email: cleanEmail,
+      });
+
+      if (existingUser) {
+        throw new HttpException(409, "Cet email existe déjà");
       }
 
-      // ==================== CRÉATION UTILISATEUR ====================
-      const users = await UserModel.create(
-        [
-          {
-            email: data.email.trim().toLowerCase(),
-            username: data.username.trim(),
-            password: data.password.trim(),
-            user_type: data.user_type,
-          },
-        ],
-        { session }
-      );
+      // ==================================================
+      // CREATE USER
+      // ==================================================
 
-      const user = users[0];
+      const user = new UserModel({
+        email: cleanEmail,
+        username: data.username.trim(),
+        password: data.password.trim(),
+        user_type: data.user_type,
 
-      if (!user) {
-        throw new Error("Échec de la création de l'utilisateur");
-      }
+        fname: data.fname.trim(),
+        lname: data.lname.trim(),
+        phone: data.phone.trim(),
+        address: data.address.trim(),
+      });
 
-      console.log("✅ USER CREATED:", user._id);
+      // IMPORTANT:
+      // save() déclenche le pre("save")
+      // donc le password sera hashé
+      await user.save({ session });
 
-      // ==================== CRÉATION WALLET ====================
-      const wallets = await WalletModel.create(
-        [
-          {
-            user_id: user._id,
-            free_ticket_balance: 0,
-            paid_ticket_balance: 0,
-          },
-        ],
-        { session }
-      );
+      // ==================================================
+      // CREATE WALLET
+      // ==================================================
 
-      const wallet = wallets[0];
+      const wallet = new WalletModel({
+        user_id: user._id,
+        free_ticket_balance: 0,
+        paid_ticket_balance: 0,
+      });
 
-      if (!wallet) {
-        throw new Error("Échec de la création du wallet");
-      }
+      await wallet.save({ session });
 
-      console.log("✅ WALLET CREATED:", wallet._id);
+      // ==================================================
+      // TOKEN
+      // ==================================================
+
+      const token = generateToken({
+        id: user._id,
+        email: user.email,
+      });
 
       await session.commitTransaction();
 
       return {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        user_type: user.user_type,
+        token,
+
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          user_type: user.user_type,
+
+          fname: user.fname,
+          lname: user.lname,
+          phone: user.phone,
+          address: user.address,
+        },
       };
-    } catch (err: any) {
+
+    } catch (err) {
+
       await session.abortTransaction();
-      console.error("❌ REGISTER ERROR:", {
-        name: err.name,
-        message: err.message,
-        code: err.code,
-        keyValue: err.keyValue,
-      });
-
-      if (err.code === 11000) {
-        throw new HttpException(409, "Un wallet existe déjà pour cet utilisateur");
-      }
-
       throw err;
+
     } finally {
+
       session.endSession();
+
     }
   }
 
-  // =======================================================
+  // ======================================================
   // LOGIN
-  // =======================================================
+  // ======================================================
 
   async login(email: string, password: string) {
+
     const cleanEmail = email.trim().toLowerCase();
 
-    const user = await UserModel.findOne({ email: cleanEmail });
+    const user = await UserModel.findOne({
+      email: cleanEmail,
+    });
 
     if (!user) {
       throw new HttpException(401, "Identifiants invalides");
     }
 
-    const ok = await comparePassword(password.trim(), user.password);
+    // DEBUG
+    console.log("PASSWORD FRONT:", password);
+    console.log("PASSWORD DB:", user.password);
 
-    if (!ok) {
+    const isMatch = await comparePassword(
+      password.trim(),
+      user.password
+    );
+
+    if (!isMatch) {
       throw new HttpException(401, "Identifiants invalides");
     }
 
@@ -125,10 +147,17 @@ async register(data: {
 
     return {
       token,
+
       user: {
         id: user._id,
         email: user.email,
         username: user.username,
+        user_type: user.user_type,
+
+        fname: user.fname,
+        lname: user.lname,
+        phone: user.phone,
+        address: user.address,
       },
     };
   }

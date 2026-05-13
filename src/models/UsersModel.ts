@@ -23,15 +23,14 @@ const userSchema = new Schema<IUsers>({
   },
   user_type: {
     type: String,
-    enum: ["student", "adult", "senior"],
+    enum: ["student", "adult", "senior", "admin"],
     required: true,
   },
 
-
-  fname: { type: String, default: "" },
-  lname: { type: String, default: "" },
-  phone: { type: String, default: "" },
-  address: { type: String, default: "" },
+  fname: { type: String, required: true },
+  lname: { type: String, required: true },
+  phone: { type: String, required: true },
+  address: { type: String, required: true },
 
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

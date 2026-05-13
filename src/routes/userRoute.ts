@@ -23,4 +23,6 @@ router.delete("/me", authMiddleware, userController.deleteMe);
 // POST /api/users/logout - logout stateless (client supprime le token)
 router.post("/logout", authMiddleware, userController.logout);
 
+
+
 export default router;

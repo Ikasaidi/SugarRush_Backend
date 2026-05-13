@@ -22,35 +22,76 @@ export class UserService {
   // Met à jour quelques champs autorisés. Le middleware Mongoose
   // re-hash le password si modifié (pre('save')).
   // ---------------------------------------------------------
-  async updateUser(
-    userId: string,
-    data: {
-      username?: string;
-      fname?: string;
-      lname?: string;
-      phone?: string;
-      address?: string;
-      password?: string;
-    }
-  ) {
-    if (!data || Object.keys(data).length === 0) {
-      throw new HttpException(400, "Aucun champ à mettre à jour");
-    }
+async updateUser(
+  userId: string,
+  data: {
+    username?: string;
+    fname?: string;
+    lname?: string;
+    phone?: string;
+    address?: string;
+    email?: string;
+    password?: string;
+    user_type?: string;
+  }
+) {
 
-    const user = await UserModel.findById(userId);
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
+  const user = await UserModel.findById(userId);
 
-    if (data.username) user.username = data.username;
-    if (data.fname) user.fname = data.fname;
-    if (data.lname) user.lname = data.lname;
-    if (data.phone) user.phone = data.phone;
-    if (data.address) user.address = data.address;
+  if (!user) {
+    throw new HttpException(
+      404,
+      "Utilisateur introuvable"
+    );
+  }
 
-    if (data.password) user.password = data.password;
+  // =====================================================
+  // UPDATE FIELDS
+  // =====================================================
 
-    await user.save();
+  if (data.username?.trim()) {
+    user.username = data.username.trim();
+  }
 
-    return {
+  if (data.fname?.trim()) {
+    user.fname = data.fname.trim();
+  }
+
+  if (data.lname?.trim()) {
+    user.lname = data.lname.trim();
+  }
+
+  if (data.phone?.trim()) {
+    user.phone = data.phone.trim();
+  }
+
+  if (data.address?.trim()) {
+    user.address = data.address.trim();
+  }
+
+  if (data.email?.trim()) {
+    user.email =
+      data.email.toLowerCase().trim();
+  }
+
+  if (data.user_type) {
+    user.user_type = data.user_type as any;
+  }
+
+  // IMPORTANT
+  // pre("save") hash automatiquement
+  if (data.password?.trim()) {
+    user.password = data.password.trim();
+  }
+
+  user.updated_at = new Date();
+
+  await user.save();
+
+  return {
+    success: true,
+
+    user: {
       id: user._id,
       email: user.email,
       username: user.username,
@@ -58,9 +99,10 @@ export class UserService {
       lname: user.lname,
       phone: user.phone,
       address: user.address,
-    };
-  }
-
+      user_type: user.user_type,
+    },
+  };
+}
   // ---------------------------------------------------------
   // Supprime l'utilisateur par id
   // ---------------------------------------------------------
