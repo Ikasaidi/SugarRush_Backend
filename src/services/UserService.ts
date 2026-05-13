@@ -22,7 +22,17 @@ export class UserService {
   // Met à jour quelques champs autorisés. Le middleware Mongoose
   // re-hash le password si modifié (pre('save')).
   // ---------------------------------------------------------
-  async updateUser(userId: string, data: { username?: string; location?: string; password?: string }) {
+  async updateUser(
+    userId: string,
+    data: {
+      username?: string;
+      fname?: string;
+      lname?: string;
+      phone?: string;
+      address?: string;
+      password?: string;
+    }
+  ) {
     if (!data || Object.keys(data).length === 0) {
       throw new HttpException(400, "Aucun champ à mettre à jour");
     }
@@ -30,8 +40,13 @@ export class UserService {
     const user = await UserModel.findById(userId);
     if (!user) throw new HttpException(404, "Utilisateur introuvable");
 
-    if (typeof data.username === "string") user.username = data.username;
-    if (typeof data.password === "string") user.password = data.password; // pre-save hook will hash
+    if (data.username) user.username = data.username;
+    if (data.fname) user.fname = data.fname;
+    if (data.lname) user.lname = data.lname;
+    if (data.phone) user.phone = data.phone;
+    if (data.address) user.address = data.address;
+
+    if (data.password) user.password = data.password;
 
     await user.save();
 
@@ -39,7 +54,10 @@ export class UserService {
       id: user._id,
       email: user.email,
       username: user.username,
-      location: (user as any).location,
+      fname: user.fname,
+      lname: user.lname,
+      phone: user.phone,
+      address: user.address,
     };
   }
 
