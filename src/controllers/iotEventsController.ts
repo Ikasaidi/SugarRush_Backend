@@ -4,11 +4,9 @@ import { IotEventsService } from "../services/iotEventsService";
 const iotEventsService = new IotEventsService();
 
 export class IotEventsController {
-
     async receiveEvent(req: Request, res: Response, next: NextFunction) {
       try {
         const { device_id, event_type, station, payload } = req.body;
-  
         if (!device_id || !event_type || !payload) {
           return res.status(400).json({
             message: "Missing required IoT fields",
@@ -32,7 +30,7 @@ export class IotEventsController {
       }
     }
   
-    async getDeviceEvents(
+async getDeviceEvents(
         req: Request<{ deviceId: string }>,
         res: Response,
         next: NextFunction
