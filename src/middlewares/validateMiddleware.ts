@@ -3,13 +3,10 @@ import { HttpException } from "../utils/http-exception";
 
 // ===========================================================
 // VALIDATION MIDDLEWARES (REGISTER / LOGIN / USER UPDATE)
-// - Valident rapidement la présence de champs requis
 // ===========================================================
 
-
 // -----------------------------------------------------------
-// REGISTER: email, username, password requis
-// HTTP: 400 (param manquant) 
+// REGISTER
 // -----------------------------------------------------------
 export const validateRegister = (
   req: Request,
@@ -23,7 +20,7 @@ export const validateRegister = (
 };
 
 // -----------------------------------------------------------
-// LOGIN: email + password requis
+// LOGIN
 // -----------------------------------------------------------
 export const validateLogin = (
   req: Request,
@@ -38,24 +35,39 @@ export const validateLogin = (
 
 // -----------------------------------------------------------
 // UPDATE USER
-// - Autorise username, location, password
-// - Vérifie qu'au moins un champ est présent
+// - Autorise fname, lname, phone, address, email, username, password
 // -----------------------------------------------------------
 export const validateUserUpdate = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
-  const { username, location, password } = req.body;
+  const allowedFields = [
+    "fname",
+    "lname",
+    "phone",
+    "address",
+    "email",
+    "username",
+    "password",
+  ];
 
-  if (
-    typeof username === "undefined" &&
-    typeof location === "undefined" &&
-    typeof password === "undefined"
-  ) {
+  const keys = Object.keys(req.body);
+
+  // Aucun champ envoyé
+  if (keys.length === 0) {
     throw new HttpException(400, "Aucun champ à mettre à jour");
+  }
+
+  // Vérifier si des champs non autorisés sont présents
+  const invalid = keys.filter((key) => !allowedFields.includes(key));
+
+  if (invalid.length > 0) {
+    throw new HttpException(
+      400,
+      `Champs non autorisés: ${invalid.join(", ")}`
+    );
   }
 
   next();
 };
-

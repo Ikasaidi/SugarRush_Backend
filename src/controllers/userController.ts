@@ -29,10 +29,21 @@ export class UserController {
 
   updateMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as string;
-      const { username, password } = req.body;
-      const updated = await userService.updateUser(userId, { username, password });
-      res.status(200).json({ success: true, user: updated });
+      const userId = (req as any).user?.id;
+
+    
+      const { username, fname, lname, phone, address, password } = req.body;
+
+      const updated = await userService.updateUser(userId, {
+        username,
+        fname,
+        lname,
+        phone,
+        address,
+        password,
+      });
+
+      res.status(200).json(updated);
     } catch (err) {
       next(err);
     }
