@@ -50,5 +50,3 @@ coverage/
 *.csr
 
 /venv
-
-config/

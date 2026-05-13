@@ -1,56 +1,144 @@
 import axios from "axios";
-import { IotEventsService } from "../services/iotEventsService"
+import { IotEventsService } from "../services/iotEventsService";
+import { IOT_DEVICES } from "../config/iotDevices";
 
 const iotService = new IotEventsService();
 
-// l'IP du Pi 
-const PI_STATUS_URL = "http://10.10.28.38:3001/status";
-const DEVICE_ID = "rasp50";
-const STATION = "station-1";
+const TRAIN_PI = IOT_DEVICES.trainPi;
+
+const PI_STATUS_URL = `${TRAIN_PI.baseUrl}/status`;
+const DEVICE_ID = TRAIN_PI.deviceId;
 
 type PiStatus = {
-  distance_cm: number | null;
-  train_present: boolean;
-  gate_state: string | null;
+  distance_station1_cm: number | null;
+  distance_station2_cm: number | null;
+  expected_station: string;
+  train_running: boolean;
+  cycle_running: boolean;
+  last_station_detected: string | null;
   last_change_time: string | null;
 };
 
-let lastTrainPresent: boolean | null = null;
+let lastTrainRunning: boolean | null = null;
+let lastStationDetected: string | null = null;
+let isProcessing = false;
+let piWasDown = false;
 
-export function startPiPolling() {
+function normalizeStation(station: string | null | undefined): string {
+  if (!station) {
+    return "unknown";
+  }
+
+  return station.replaceAll("_", "-");
+}
+
+export function startTrainPiPolling() {
+  console.log(`Train Pi polling started: ${PI_STATUS_URL}`);
+
   setInterval(async () => {
+    if (isProcessing) return;
+
     try {
-      const { data } = await axios.get<PiStatus>(PI_STATUS_URL, { timeout: 1500 });
 
-      const train = data.train_present;
+      isProcessing = true;
 
-      // 1ère lecture: sans créer d’event
-      if (lastTrainPresent === null) {
-        lastTrainPresent = train;
+      const { data } = await axios.get<PiStatus>(PI_STATUS_URL, {
+        timeout: 5000,
+      });
+
+      if (piWasDown) {
+        console.log("Train Pi is reachable again");
+        piWasDown = false;
+      }
+
+       // Première lecture
+      if (lastTrainRunning === null) {
+        lastTrainRunning = data.train_running;
+
+        lastStationDetected = normalizeStation(data.last_station_detected);
+
         return;
       }
 
-      // si changement -> créer un event en bd
-      if (train !== lastTrainPresent) {
-        const eventType = train ? "TRAIN_DETECTED" : "TRAIN_LEFT";
+      const normalizedStation = normalizeStation(
+        data.last_station_detected || data.expected_station,
+      );
+      // ---------------------------
+      // TRAIN START / STOP
+      // ---------------------------
 
+      if (data.train_running !== lastTrainRunning) {
         await iotService.createEvent({
           device_id: DEVICE_ID,
-          event_type: eventType,
-          station: STATION,
+          event_type: data.train_running ? "TRAIN_STARTED" : "TRAIN_STOPPED",
+          station: normalizedStation,
           payload: JSON.stringify({
-            distance_cm: data.distance_cm,
-            gate_state: data.gate_state,
+            distance_station1_cm: data.distance_station1_cm,
+            distance_station2_cm: data.distance_station2_cm,
+            expected_station: data.expected_station,
+            train_running: data.train_running,
+            cycle_running: data.cycle_running,
+            last_station_detected: data.last_station_detected,
             last_change_time: data.last_change_time,
-            source: "backend_poll"
+            source: "backend_train_pi_poll",
           }),
         });
 
-        lastTrainPresent = train;
+        console.log(
+          `IoT Event created: ${
+            data.train_running ? "TRAIN_STARTED" : "TRAIN_STOPPED"
+          }`,
+        );
+
+        lastTrainRunning = data.train_running;
+      }
+
+      // ---------------------------
+      // STATION DETECTION
+      // ---------------------------
+
+      const currentDetectedStation = normalizeStation(
+        data.last_station_detected,
+      );
+
+      if (
+        data.last_station_detected &&
+        currentDetectedStation !== lastStationDetected
+      ) {
+        await iotService.createEvent({
+          device_id: DEVICE_ID,
+          event_type: "TRAIN_DETECTED_AT_STATION",
+          station: currentDetectedStation,
+          payload: JSON.stringify({
+            distance_station1_cm: data.distance_station1_cm,
+            distance_station2_cm: data.distance_station2_cm,
+            expected_station: data.expected_station,
+            train_running: data.train_running,
+            cycle_running: data.cycle_running,
+            last_change_time: data.last_change_time,
+            source: "backend_train_pi_poll",
+          }),
+        });
+
+        console.log(
+          `IoT Event created: TRAIN_DETECTED_AT_STATION (${currentDetectedStation})`,
+        );
+
+        lastStationDetected = currentDetectedStation;
       }
     } catch (err: any) {
-      // si le Pi est down, on log (pas de crash)
-      console.log("Pi poll error:", err?.message || err);
+      if (!piWasDown) {
+        console.log(
+          "Train Pi unreachable:",
+          TRAIN_PI.baseUrl,
+          "-",
+          err?.message || err,
+        );
+
+        piWasDown = true;
+      }
+    } finally {
+      isProcessing = false;
     }
-  }, 500); 
+  }, 500);
 }
