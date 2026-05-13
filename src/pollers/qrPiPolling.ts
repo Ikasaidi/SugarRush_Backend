@@ -1,6 +1,9 @@
 import { getPiData, postPiData } from "../services/iotHttpClient";
 import { IOT_DEVICES } from "../config/iotDevices";
 import { validateScannedQr } from "../services/QrCodeService";
+import { IotEventsService } from "../services/iotEventsService";
+
+const iotService = new IotEventsService();
 
 type QrPiStatus = {
   has_scan: boolean;
@@ -22,6 +25,9 @@ export function startQrPiPolling() {
     if (isProcessing) return;
 
     try {
+
+      isProcessing = true;
+
       const data = await getPiData<QrPiStatus>(
         `${IOT_DEVICES.qrPi.baseUrl}/qr-status`
       );
@@ -51,8 +57,6 @@ export function startQrPiPolling() {
         return;
       }
 
-      isProcessing = true;
-
       lastQrData = data.qr_data;
       lastQrProcessedAt = now;
 
@@ -61,6 +65,24 @@ export function startQrPiPolling() {
       const result = await validateScannedQr(data.qr_data);
 
       console.log("Validation result:", result);
+
+      await iotService.createEvent({
+        device_id: IOT_DEVICES.qrPi.deviceId,
+
+        event_type: result.allowed
+          ? "QR_ACCESS_GRANTED"
+          : "QR_ACCESS_DENIED",
+
+        station: "station-2",
+
+        payload: JSON.stringify({
+          qr_data: data.qr_data,
+          scanned_at: data.scanned_at,
+          allowed: result.allowed,
+          validation_result: result,
+          source: "backend_qr_pi_poll", 
+        }),
+      });
 
       await postPiData(
         `${IOT_DEVICES.qrPi.baseUrl}/qr-result`,

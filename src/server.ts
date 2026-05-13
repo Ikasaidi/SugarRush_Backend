@@ -1,5 +1,5 @@
 // ===========================================================
-// SERVER 
+// SERVER
 // - Charge la config/env
 // - Se connecte à Mongo
 // - Démarre HTTP et/ou HTTPS (avec redirection possible)
@@ -11,15 +11,26 @@ import fs from "fs";
 import path from "path";
 import http from "http";
 import https from "https";
+
+
 import {connectDB} from "./data/connectDB"
-// import { startQrPiPolling } from "./pollers/qrPiPolling";
-// import { startPiPolling } from "./iot/piPoller";
+
+
+
+
+import { connectDB } from "./data/connectDB";
+import { startTrainPiPolling } from "./pollers/piPoller";
+import { startQrPiPolling } from "./pollers/qrPiPolling";
+
+
 
 // Debug rapide : voir l'environnement courant
 console.log("ENV:", process.env.NODE_ENV);
 console.log("HTTPS ENABLED =", config.get("server.https.enabled"));
-console.log("Redirect HTTP→HTTPS =", config.get("server.https.redirectAllHttpToHttps"));
-
+console.log(
+  "Redirect HTTP→HTTPS =",
+  config.get("server.https.redirectAllHttpToHttps"),
+);
 
 // -----------------------------------------------------------
 // CONFIG SERVEUR (lue depuis config/*)
@@ -27,8 +38,12 @@ console.log("Redirect HTTP→HTTPS =", config.get("server.https.redirectAllHttpT
 // Ports + options HTTPS
 const httpPort = config.get<number>("server.http.port");
 const httpsPort = config.get<number>("server.https.port");
-const enableHttps = config.get<boolean>("server.https.enabled") === true || config.get("server.https.enabled") === "true";
-const redirectAll = config.get<boolean>("server.https.redirectAllHttpToHttps") === true || config.get("server.https.redirectAllHttpToHttps") === "true";
+const enableHttps =
+  config.get<boolean>("server.https.enabled") === true ||
+  config.get("server.https.enabled") === "true";
+const redirectAll =
+  config.get<boolean>("server.https.redirectAllHttpToHttps") === true ||
+  config.get("server.https.redirectAllHttpToHttps") === "true";
 
 // -----------------------------------------------------------
 // CERTIFICATS SSL (si HTTPS activé)
@@ -38,7 +53,7 @@ let sslOptions: any = {};
 if (enableHttps) {
   const keyPath = path.resolve(config.get<string>("ssl.keyPath"));
   const certPath = path.resolve(config.get<string>("ssl.certPath"));
-  
+
   // Vérifier que les fichiers existent avant de les charger
   if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
     sslOptions = {
@@ -49,7 +64,9 @@ if (enableHttps) {
     console.error(`⚠️  HTTPS activé mais certificats manquants:`);
     console.error(`   Key: ${keyPath}`);
     console.error(`   Cert: ${certPath}`);
-    console.error(`   Exécutez: openssl req -x509 -newkey rsa:4096 -keyout cert/server.key -out cert/server.cert -days 365 -nodes`);
+    console.error(
+      `   Exécutez: openssl req -x509 -newkey rsa:4096 -keyout cert/server.key -out cert/server.cert -days 365 -nodes`,
+    );
     process.exit(1);
   }
 }
@@ -63,22 +80,25 @@ if (enableHttps) {
 // -----------------------------------------------------------
 const startServer = async () => {
   try {
-
     // 1) DB
     console.log("db import:", connectDB);
     await connectDB();
+
     // startPiPolling();
 
      //LANCER LE POLLING QR
-    // startQrPiPolling();
+
+    startTrainPiPolling();
+
+    //  //LANCER LE POLLING QR
+    startQrPiPolling();
+
     console.log("QR Pi polling started");
 
     // // 2) HTTPS (si activé dans la config)
     if (enableHttps) {
       https.createServer(sslOptions, app).listen(httpsPort, () => {
-        console.log(
-          `Serveur HTTPS lancé sur https://localhost:${httpsPort}`
-        );
+        console.log(`Serveur HTTPS lancé sur https://localhost:${httpsPort}`);
       });
     }
 
@@ -107,14 +127,13 @@ const startServer = async () => {
       app.listen(httpPort, "0.0.0.0", () => {
         console.log(`Serveur lancé sur http://0.0.0.0:${httpPort}`);
       });
-  
+
       /// pour acces reseau local ///
       //  app.listen(httpPort, "0.0.0.0", () => {
       //   console.log(`Serveur lancé sur http://192.168.68.105:${httpPort}`);
       // });
     }
   } catch (err) {
-
     console.error("Impossible de démarrer le serveur :", err);
   }
 };
