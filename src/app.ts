@@ -5,6 +5,7 @@ import config from "config";
 import userRoute from "./routes/userRoute";
 import QrCodeRoute from "./routes/QrCodeRoute"
 import iotEventsRoutes from "./routes/iotEventsRoute";
+import purchaseRoute from "./routes/purchaseRoute";
 import c from "config";
 import cors from "cors";
 import bodyParser from 'body-parser';
@@ -83,6 +84,9 @@ app.use("/api/users", userRoute);
 //QR Code
 app.use('/api/qr-code', QrCodeRoute);
 app.use("/api/iot", iotEventsRoutes);
+
+// Purchase
+app.use("/api/purchases", purchaseRoute);
 
 
 export default app;
