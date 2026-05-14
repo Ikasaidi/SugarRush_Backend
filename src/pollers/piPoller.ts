@@ -1,8 +1,12 @@
 import axios from "axios";
 import { IotEventsService } from "../services/iotEventsService";
 import { IOT_DEVICES } from "../config/iotDevices";
+import { generatePredictedSchedules } from "../services/TrainSchedulePredictionService";
+import { trainRuntimeState } from "../services/trainRuntimeState";
+import { TrainSchedulesService } from "../services/TrainScedulesService";
 
 const iotService = new IotEventsService();
+const trainSchedulesService = new TrainSchedulesService();
 
 const TRAIN_PI = IOT_DEVICES.trainPi;
 
@@ -21,6 +25,8 @@ type PiStatus = {
 
 let lastTrainRunning: boolean | null = null;
 let lastStationDetected: string | null = null;
+let lastKnownStation: string | null = null;
+
 let isProcessing = false;
 let piWasDown = false;
 
@@ -46,16 +52,40 @@ export function startTrainPiPolling() {
         timeout: 5000,
       });
 
+      trainRuntimeState.trainRunning = data.train_running;
+      trainRuntimeState.lastSeenAt = new Date();
+      trainRuntimeState.serviceStatus = data.train_running ? "running" : "stopped";
+
       if (piWasDown) {
         console.log("Train Pi is reachable again");
         piWasDown = false;
       }
 
        // Première lecture
-      if (lastTrainRunning === null) {
+       if (lastTrainRunning === null) {
         lastTrainRunning = data.train_running;
 
+        const detectedStation = normalizeStation(
+          data.last_station_detected || data.expected_station
+        );
+
         lastStationDetected = normalizeStation(data.last_station_detected);
+
+        if (detectedStation !== "unknown") {
+          lastKnownStation = detectedStation;
+          trainRuntimeState.lastKnownStation = detectedStation;
+        }
+
+        if (data.train_running) {
+          trainRuntimeState.lastStartedAt = new Date();
+
+          if (lastKnownStation) {
+            await trainSchedulesService.deleteFutureSchedules(DEVICE_ID);
+            await generatePredictedSchedules(DEVICE_ID, lastKnownStation);
+          }
+        } else {
+          trainRuntimeState.lastStoppedAt = new Date();
+        }
 
         return;
       }
@@ -68,6 +98,11 @@ export function startTrainPiPolling() {
       // ---------------------------
 
       if (data.train_running !== lastTrainRunning) {
+        if (data.train_running) {
+            trainRuntimeState.lastStartedAt = new Date();
+          } else {
+            trainRuntimeState.lastStoppedAt = new Date();
+          }
         await iotService.createEvent({
           device_id: DEVICE_ID,
           event_type: data.train_running ? "TRAIN_STARTED" : "TRAIN_STOPPED",
@@ -89,6 +124,15 @@ export function startTrainPiPolling() {
             data.train_running ? "TRAIN_STARTED" : "TRAIN_STOPPED"
           }`,
         );
+
+        if (data.train_running) {
+          if (lastKnownStation) {
+            await trainSchedulesService.deleteFutureSchedules(DEVICE_ID);
+            await generatePredictedSchedules(DEVICE_ID, lastKnownStation);
+          } else {
+            console.log("Cannot generate schedules: lastKnownStation is unknown");
+          }
+        }
 
         lastTrainRunning = data.train_running;
       }
@@ -123,8 +167,10 @@ export function startTrainPiPolling() {
         console.log(
           `IoT Event created: TRAIN_DETECTED_AT_STATION (${currentDetectedStation})`,
         );
-
+        lastKnownStation = currentDetectedStation;
+        trainRuntimeState.lastKnownStation = currentDetectedStation;
         lastStationDetected = currentDetectedStation;
+        
       }
     } catch (err: any) {
       if (!piWasDown) {
@@ -136,6 +182,8 @@ export function startTrainPiPolling() {
         );
 
         piWasDown = true;
+
+        trainRuntimeState.serviceStatus = "offline";
       }
     } finally {
       isProcessing = false;

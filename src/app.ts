@@ -6,7 +6,8 @@ import userRoute from "./routes/userRoute";
 import QrCodeRoute from "./routes/QrCodeRoute"
 import iotEventsRoutes from "./routes/iotEventsRoute";
 import purchaseRoute from "./routes/purchaseRoute";
-
+import trainStatusRoutes from "./routes/trainStatusRoutes";
+import trainSchedulesRoutes from "./routes/trainSchedulesRoutes";
 import { errorMiddleware } from "../src/middlewares/errorMiddleWare";
 import c from "config";
 import cors from "cors";
@@ -18,7 +19,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// app.use(express.json()); 
+
 
 /// Pour povoir envoyer des images en base64 (taille max augmentée) ///
 app.use(express.json({ limit: "10mb" }));
@@ -99,12 +100,13 @@ app.use("/api/users", userRoute);
 
 //QR Code
 app.use('/api/qr-code', QrCodeRoute);
+// IoT Events
 app.use("/api/iot", iotEventsRoutes);
+app.use("/api/train-schedules", trainSchedulesRoutes);
+app.use("/api/train-status", trainStatusRoutes);
 
-// Purchase
 app.use("/api/purchases", purchaseRoute);
 
 app.use(errorMiddleware);
-
 
 export default app;
