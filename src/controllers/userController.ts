@@ -1,4 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import { UserService } from "../services/UserService";
 
 const userService = new UserService();
@@ -6,12 +11,22 @@ const userService = new UserService();
 export class UserController {
 
   // ====================================================
-  // GET /api/users/me
+  // GET CURRENT USER
   // ====================================================
-  me = async (req: Request, res: Response, next: NextFunction) => {
+
+  me = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
     try {
-      const userId = (req as any).user?.id;
-      const user = await userService.getById(userId);
+
+      const userId =
+        (req as any).user?.id;
+
+      const user =
+        await userService.getById(userId);
 
       res.status(200).json({
         success: true,
@@ -19,28 +34,54 @@ export class UserController {
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 
   // ====================================================
-  // PATCH /api/users/me
+  // UPDATE CURRENT USER
   // ====================================================
-  updateMe = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as any).user?.id;
 
-      // Filtrer les champs réellement envoyés
-      const allowed = ["username", "fname", "lname", "phone", "address", "password", "user_type"];
+  updateMe = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
+    try {
+
+      const userId =
+        (req as any).user?.id;
+
+      const allowedFields = [
+        "username",
+        "fname",
+        "lname",
+        "phone",
+        "address",
+        "email",
+        "password",
+      ];
+
       const data: any = {};
 
-      for (const key of allowed) {
-        if (req.body[key] !== undefined && req.body[key] !== null) {
+      for (const key of allowedFields) {
+
+        if (
+          req.body[key] !== undefined &&
+          req.body[key] !== null
+        ) {
           data[key] = req.body[key];
         }
       }
 
-      const updatedUser = await userService.updateUser(userId, data);
+      const updatedUser =
+        await userService.updateUser(
+          userId,
+          data
+        );
 
       res.status(200).json({
         success: true,
@@ -48,18 +89,30 @@ export class UserController {
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 
   // ====================================================
-  // DELETE /api/users/me
+  // DELETE CURRENT USER
   // ====================================================
-  deleteMe = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = (req as any).user?.id;
 
-      await userService.deleteUser(userId);
+  deleteMe = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
+    try {
+
+      const userId =
+        (req as any).user?.id;
+
+      await userService.deleteUser(
+        userId
+      );
 
       res.status(200).json({
         success: true,
@@ -67,23 +120,33 @@ export class UserController {
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 
   // ====================================================
-  // POST /api/users/logout
+  // LOGOUT
   // ====================================================
-  logout = async (_req: Request, res: Response, next: NextFunction) => {
+
+  logout = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
     try {
-      // JWT stateless → juste dire OK
+
       res.status(200).json({
         success: true,
         message: "Déconnecté",
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 }

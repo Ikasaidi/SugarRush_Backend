@@ -1,122 +1,187 @@
-import { UserModel} from "../models/UsersModel";
+import { UserModel } from "../models/UsersModel";
 import { HttpException } from "../utils/http-exception";
 
-// ===========================================================
-// USER SERVICE
-// - Encapsule la logique métier pour l'utilisateur courant
-// - getById, updateUser, deleteUser, logout (stateless JWT)
-// ===========================================================
 export class UserService {
-  // ---------------------------------------------------------
-  // Récupère un utilisateur par son id et masque le password
-  // ---------------------------------------------------------
+
+  // =====================================================
+  // GET USER BY ID
+  // =====================================================
+
   async getById(userId: string) {
-    const user = await UserModel.findById(userId).lean();
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
 
-    const { password, ...safe } = user as any;
-    return { id: user._id, ...safe };
-  }
+    const user =
+      await UserModel.findById(userId).lean();
 
-  // ---------------------------------------------------------
-  // Met à jour quelques champs autorisés. Le middleware Mongoose
-  // re-hash le password si modifié (pre('save')).
-  // ---------------------------------------------------------
-async updateUser(
-  userId: string,
-  data: {
-    username?: string;
-    fname?: string;
-    lname?: string;
-    phone?: string;
-    address?: string;
-    email?: string;
-    password?: string;
-    user_type?: string;
-  }
-) {
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
 
-  const user = await UserModel.findById(userId);
+    const {
+      password,
+      ...safeUser
+    } = user as any;
 
-  if (!user) {
-    throw new HttpException(
-      404,
-      "Utilisateur introuvable"
-    );
-  }
-
-  // =====================================================
-  // UPDATE FIELDS
-  // =====================================================
-
-  if (data.username?.trim()) {
-    user.username = data.username.trim();
-  }
-
-  if (data.fname?.trim()) {
-    user.fname = data.fname.trim();
-  }
-
-  if (data.lname?.trim()) {
-    user.lname = data.lname.trim();
-  }
-
-  if (data.phone?.trim()) {
-    user.phone = data.phone.trim();
-  }
-
-  if (data.address?.trim()) {
-    user.address = data.address.trim();
-  }
-
-  if (data.email?.trim()) {
-    user.email =
-      data.email.toLowerCase().trim();
-  }
-
-  if (data.user_type) {
-    user.user_type = data.user_type as any;
-  }
-
-  // IMPORTANT
-  // pre("save") hash automatiquement
-  if (data.password?.trim()) {
-    user.password = data.password.trim();
-  }
-
-  user.updated_at = new Date();
-
-  await user.save();
-
-  return {
-    success: true,
-
-    user: {
+    return {
       id: user._id,
+      ...safeUser,
+    };
+  }
+
+  // =====================================================
+  // UPDATE USER
+  // =====================================================
+
+  async updateUser(
+    userId: string,
+    data: {
+      username?: string;
+      fname?: string;
+      lname?: string;
+      phone?: string;
+      address?: string;
+      email?: string;
+      password?: string;
+    }
+  ) {
+
+    const user =
+      await UserModel.findById(userId)
+        .select("+password");
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
+
+    // =================================================
+    // EMAIL CHECK
+    // =================================================
+
+    if (data.email?.trim()) {
+
+      const cleanEmail =
+        data.email.trim().toLowerCase();
+
+      const existingEmail =
+        await UserModel.findOne({
+          email: cleanEmail,
+          _id: { $ne: userId },
+        });
+
+      if (existingEmail) {
+        throw new HttpException(
+          409,
+          "Cet email est déjà utilisé"
+        );
+      }
+
+      user.email = cleanEmail;
+    }
+
+    // =================================================
+    // USERNAME CHECK
+    // =================================================
+
+    if (data.username?.trim()) {
+
+      const cleanUsername =
+        data.username.trim();
+
+      const existingUsername =
+        await UserModel.findOne({
+          username: cleanUsername,
+          _id: { $ne: userId },
+        });
+
+      if (existingUsername) {
+        throw new HttpException(
+          409,
+          "Ce username est déjà utilisé"
+        );
+      }
+
+      user.username = cleanUsername;
+    }
+
+    // =================================================
+    // OTHER FIELDS
+    // =================================================
+
+    if (data.fname?.trim()) {
+      user.fname = data.fname.trim();
+    }
+
+    if (data.lname?.trim()) {
+      user.lname = data.lname.trim();
+    }
+
+    if (data.phone?.trim()) {
+      user.phone = data.phone.trim();
+    }
+
+    if (data.address?.trim()) {
+      user.address = data.address.trim();
+    }
+
+    // =================================================
+    // PASSWORD
+    // =================================================
+
+    if (data.password?.trim()) {
+      user.password =
+        data.password.trim();
+    }
+
+    await user.save();
+
+    return {
+      id: user._id,
+
       email: user.email,
       username: user.username,
+      user_type: user.user_type,
+
       fname: user.fname,
       lname: user.lname,
       phone: user.phone,
       address: user.address,
-      user_type: user.user_type,
-    },
-  };
-}
-  // ---------------------------------------------------------
-  // Supprime l'utilisateur par id
-  // ---------------------------------------------------------
-  async deleteUser(userId: string) {
-    const user = await UserModel.findByIdAndDelete(userId);
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
-    return { success: true };
+    };
   }
 
-  // ---------------------------------------------------------
-  // Logout (stateless JWT): rien à invalider coté serveur
-  // ---------------------------------------------------------
+  // =====================================================
+  // DELETE USER
+  // =====================================================
+
+  async deleteUser(userId: string) {
+
+    const user =
+      await UserModel.findByIdAndDelete(userId);
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
+
+    return {
+      success: true,
+    };
+  }
+
+  // =====================================================
+  // LOGOUT
+  // =====================================================
+
   async logout() {
-    // Stateless JWT: côté serveur, rien à faire (sauf si blacklist, non implémentée)
-    return { success: true };
+
+    return {
+      success: true,
+    };
   }
 }

@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
+
 import { UserModel } from "../models/UsersModel";
 import { WalletModel } from "../models/WalletModel";
+
 import { HttpException } from "../utils/http-exception";
 import { comparePassword } from "../utils/bcryptHelp";
 import { generateToken } from "../utils/jwtHelp";
 
 export class AuthService {
-
   // ======================================================
   // REGISTER
   // ======================================================
@@ -21,22 +22,35 @@ export class AuthService {
     phone: string;
     address: string;
   }) {
-
     const session = await mongoose.startSession();
 
     try {
-
       session.startTransaction();
 
       const cleanEmail = data.email.trim().toLowerCase();
 
-      // Vérifie si email déjà utilisé
-      const existingUser = await UserModel.findOne({
-        email: cleanEmail,
-      });
+      // ==================================================
+      // CHECK EMAIL
+      // ==================================================
 
-      if (existingUser) {
+      const existingEmail = await UserModel.findOne({
+        email: cleanEmail,
+      }).session(session);
+
+      if (existingEmail) {
         throw new HttpException(409, "Cet email existe déjà");
+      }
+
+      // ==================================================
+      // CHECK USERNAME
+      // ==================================================
+
+      const existingUsername = await UserModel.findOne({
+        username: data.username.trim(),
+      }).session(session);
+
+      if (existingUsername) {
+        throw new HttpException(409, "Ce username existe déjà");
       }
 
       // ==================================================
@@ -47,6 +61,7 @@ export class AuthService {
         email: cleanEmail,
         username: data.username.trim(),
         password: data.password.trim(),
+
         user_type: data.user_type,
 
         fname: data.fname.trim(),
@@ -55,9 +70,6 @@ export class AuthService {
         address: data.address.trim(),
       });
 
-      // IMPORTANT:
-      // save() déclenche le pre("save")
-      // donc le password sera hashé
       await user.save({ session });
 
       // ==================================================
@@ -66,6 +78,7 @@ export class AuthService {
 
       const wallet = new WalletModel({
         user_id: user._id,
+
         free_ticket_balance: 0,
         paid_ticket_balance: 0,
       });
@@ -73,7 +86,7 @@ export class AuthService {
       await wallet.save({ session });
 
       // ==================================================
-      // TOKEN
+      // GENERATE TOKEN
       // ==================================================
 
       const token = generateToken({
@@ -88,6 +101,7 @@ export class AuthService {
 
         user: {
           id: user._id,
+
           email: user.email,
           username: user.username,
           user_type: user.user_type,
@@ -98,16 +112,12 @@ export class AuthService {
           address: user.address,
         },
       };
-
     } catch (err) {
-
       await session.abortTransaction();
+
       throw err;
-
     } finally {
-
       session.endSession();
-
     }
   }
 
@@ -116,25 +126,17 @@ export class AuthService {
   // ======================================================
 
   async login(email: string, password: string) {
-
     const cleanEmail = email.trim().toLowerCase();
 
     const user = await UserModel.findOne({
       email: cleanEmail,
-    });
+    }).select("+password");
 
     if (!user) {
       throw new HttpException(401, "Identifiants invalides");
     }
 
-    // DEBUG
-    console.log("PASSWORD FRONT:", password);
-    console.log("PASSWORD DB:", user.password);
-
-    const isMatch = await comparePassword(
-      password.trim(),
-      user.password
-    );
+    const isMatch = await comparePassword(password.trim(), user.password);
 
     if (!isMatch) {
       throw new HttpException(401, "Identifiants invalides");
@@ -150,6 +152,7 @@ export class AuthService {
 
       user: {
         id: user._id,
+
         email: user.email,
         username: user.username,
         user_type: user.user_type,

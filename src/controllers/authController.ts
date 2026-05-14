@@ -1,4 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import {
+  Request,
+  Response,
+  NextFunction,
+} from "express";
+
 import { AuthService } from "../services/authService";
 
 const authService = new AuthService();
@@ -9,9 +14,13 @@ export class AuthController {
   // REGISTER
   // ====================================================
 
-  register = async (req: Request, res: Response, next: NextFunction) => {
+  register = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
     try {
-      console.log("REGISTER BODY:", req.body);
 
       const {
         email,
@@ -24,16 +33,17 @@ export class AuthController {
         address,
       } = req.body;
 
-      const result = await authService.register({
-        email,
-        username,
-        password,
-        user_type,
-        fname,
-        lname,
-        phone,
-        address,
-      });
+      const result =
+        await authService.register({
+          email,
+          username,
+          password,
+          user_type,
+          fname,
+          lname,
+          phone,
+          address,
+        });
 
       res.status(201).json({
         success: true,
@@ -41,7 +51,9 @@ export class AuthController {
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 
@@ -49,13 +61,24 @@ export class AuthController {
   // LOGIN
   // ====================================================
 
-  login = async (req: Request, res: Response, next: NextFunction) => {
+  login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
     try {
-      console.log("LOGIN BODY:", req.body);
 
-      const { email, password } = req.body;
+      const {
+        email,
+        password,
+      } = req.body;
 
-      const result = await authService.login(email, password);
+      const result =
+        await authService.login(
+          email,
+          password
+        );
 
       res.status(200).json({
         success: true,
@@ -63,7 +86,9 @@ export class AuthController {
       });
 
     } catch (err) {
+
       next(err);
+
     }
   };
 }
