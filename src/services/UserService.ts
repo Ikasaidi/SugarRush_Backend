@@ -1,27 +1,39 @@
-import { UserModel} from "../models/UsersModel";
+import { UserModel } from "../models/UsersModel";
 import { HttpException } from "../utils/http-exception";
 
-// ===========================================================
-// USER SERVICE
-// - Encapsule la logique métier pour l'utilisateur courant
-// - getById, updateUser, deleteUser, logout (stateless JWT)
-// ===========================================================
 export class UserService {
-  // ---------------------------------------------------------
-  // Récupère un utilisateur par son id et masque le password
-  // ---------------------------------------------------------
-  async getById(userId: string) {
-    const user = await UserModel.findById(userId).lean();
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
 
-    const { password, ...safe } = user as any;
-    return { id: user._id, ...safe };
+  // =====================================================
+  // GET USER BY ID
+  // =====================================================
+
+  async getById(userId: string) {
+
+    const user =
+      await UserModel.findById(userId).lean();
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
+
+    const {
+      password,
+      ...safeUser
+    } = user as any;
+
+    return {
+      id: user._id,
+      ...safeUser,
+    };
   }
 
-  // ---------------------------------------------------------
-  // Met à jour quelques champs autorisés. Le middleware Mongoose
-  // re-hash le password si modifié (pre('save')).
-  // ---------------------------------------------------------
+  // =====================================================
+  // UPDATE USER
+  // =====================================================
+
   async updateUser(
     userId: string,
     data: {
@@ -30,30 +42,110 @@ export class UserService {
       lname?: string;
       phone?: string;
       address?: string;
+      email?: string;
       password?: string;
     }
   ) {
-    if (!data || Object.keys(data).length === 0) {
-      throw new HttpException(400, "Aucun champ à mettre à jour");
+
+    const user =
+      await UserModel.findById(userId)
+        .select("+password");
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
     }
 
-    const user = await UserModel.findById(userId);
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
+    // =================================================
+    // EMAIL CHECK
+    // =================================================
 
-    if (data.username) user.username = data.username;
-    if (data.fname) user.fname = data.fname;
-    if (data.lname) user.lname = data.lname;
-    if (data.phone) user.phone = data.phone;
-    if (data.address) user.address = data.address;
+    if (data.email?.trim()) {
 
-    if (data.password) user.password = data.password;
+      const cleanEmail =
+        data.email.trim().toLowerCase();
+
+      const existingEmail =
+        await UserModel.findOne({
+          email: cleanEmail,
+          _id: { $ne: userId },
+        });
+
+      if (existingEmail) {
+        throw new HttpException(
+          409,
+          "Cet email est déjà utilisé"
+        );
+      }
+
+      user.email = cleanEmail;
+    }
+
+    // =================================================
+    // USERNAME CHECK
+    // =================================================
+
+    if (data.username?.trim()) {
+
+      const cleanUsername =
+        data.username.trim();
+
+      const existingUsername =
+        await UserModel.findOne({
+          username: cleanUsername,
+          _id: { $ne: userId },
+        });
+
+      if (existingUsername) {
+        throw new HttpException(
+          409,
+          "Ce username est déjà utilisé"
+        );
+      }
+
+      user.username = cleanUsername;
+    }
+
+    // =================================================
+    // OTHER FIELDS
+    // =================================================
+
+    if (data.fname?.trim()) {
+      user.fname = data.fname.trim();
+    }
+
+    if (data.lname?.trim()) {
+      user.lname = data.lname.trim();
+    }
+
+    if (data.phone?.trim()) {
+      user.phone = data.phone.trim();
+    }
+
+    if (data.address?.trim()) {
+      user.address = data.address.trim();
+    }
+
+    // =================================================
+    // PASSWORD
+    // =================================================
+
+    if (data.password?.trim()) {
+      user.password =
+        data.password.trim();
+    }
 
     await user.save();
 
     return {
       id: user._id,
+
       email: user.email,
       username: user.username,
+      user_type: user.user_type,
+
       fname: user.fname,
       lname: user.lname,
       phone: user.phone,
@@ -61,20 +153,35 @@ export class UserService {
     };
   }
 
-  // ---------------------------------------------------------
-  // Supprime l'utilisateur par id
-  // ---------------------------------------------------------
+  // =====================================================
+  // DELETE USER
+  // =====================================================
+
   async deleteUser(userId: string) {
-    const user = await UserModel.findByIdAndDelete(userId);
-    if (!user) throw new HttpException(404, "Utilisateur introuvable");
-    return { success: true };
+
+    const user =
+      await UserModel.findByIdAndDelete(userId);
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
+
+    return {
+      success: true,
+    };
   }
 
-  // ---------------------------------------------------------
-  // Logout (stateless JWT): rien à invalider coté serveur
-  // ---------------------------------------------------------
+  // =====================================================
+  // LOGOUT
+  // =====================================================
+
   async logout() {
-    // Stateless JWT: côté serveur, rien à faire (sauf si blacklist, non implémentée)
-    return { success: true };
+
+    return {
+      success: true,
+    };
   }
 }

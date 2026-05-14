@@ -1,97 +1,119 @@
+import mongoose from "mongoose";
+
 import { UserModel } from "../models/UsersModel";
+import { WalletModel } from "../models/WalletModel";
+
 import { HttpException } from "../utils/http-exception";
 import { comparePassword } from "../utils/bcryptHelp";
 import { generateToken } from "../utils/jwtHelp";
-import { WalletModel } from "../models/WalletModel";
-import mongoose from "mongoose";
-
-// ===========================================================
-// AUTH SERVICE
-// ===========================================================
 
 export class AuthService {
-async register(data: {
+  // ======================================================
+  // REGISTER
+  // ======================================================
+
+  async register(data: {
     email: string;
     username: string;
     password: string;
-    user_type: "student" | "adult" | "senior";
+    user_type: "student" | "adult" | "senior" | "admin";
+    fname: string;
+    lname: string;
+    phone: string;
+    address: string;
   }) {
     const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
-      console.log("REGISTER START - Email:", data.email);
+      session.startTransaction();
 
-      // Vérification existence
-      const exists = await UserModel.findOne({
-        email: data.email.toLowerCase().trim(),
+      const cleanEmail = data.email.trim().toLowerCase();
+
+      // ==================================================
+      // CHECK EMAIL
+      // ==================================================
+
+      const existingEmail = await UserModel.findOne({
+        email: cleanEmail,
       }).session(session);
 
-      if (exists) {
-        throw new HttpException(409, "Cet email est déjà enregistré");
+      if (existingEmail) {
+        throw new HttpException(409, "Cet email existe déjà");
       }
 
-      // ==================== CRÉATION UTILISATEUR ====================
-      const users = await UserModel.create(
-        [
-          {
-            email: data.email.trim().toLowerCase(),
-            username: data.username.trim(),
-            password: data.password.trim(),
-            user_type: data.user_type,
-          },
-        ],
-        { session }
-      );
+      // ==================================================
+      // CHECK USERNAME
+      // ==================================================
 
-      const user = users[0];
+      const existingUsername = await UserModel.findOne({
+        username: data.username.trim(),
+      }).session(session);
 
-      if (!user) {
-        throw new Error("Échec de la création de l'utilisateur");
+      if (existingUsername) {
+        throw new HttpException(409, "Ce username existe déjà");
       }
 
-      console.log("✅ USER CREATED:", user._id);
+      // ==================================================
+      // CREATE USER
+      // ==================================================
 
-      // ==================== CRÉATION WALLET ====================
-      const wallets = await WalletModel.create(
-        [
-          {
-            user_id: user._id,
-            free_ticket_balance: 0,
-            paid_ticket_balance: 0,
-          },
-        ],
-        { session }
-      );
+      const user = new UserModel({
+        email: cleanEmail,
+        username: data.username.trim(),
+        password: data.password.trim(),
 
-      const wallet = wallets[0];
+        user_type: data.user_type,
 
-      if (!wallet) {
-        throw new Error("Échec de la création du wallet");
-      }
+        fname: data.fname.trim(),
+        lname: data.lname.trim(),
+        phone: data.phone.trim(),
+        address: data.address.trim(),
+      });
 
-      console.log("✅ WALLET CREATED:", wallet._id);
+      await user.save({ session });
+
+      // ==================================================
+      // CREATE WALLET
+      // ==================================================
+
+      const wallet = new WalletModel({
+        user_id: user._id,
+
+        free_ticket_balance: 0,
+        paid_ticket_balance: 0,
+      });
+
+      await wallet.save({ session });
+
+      // ==================================================
+      // GENERATE TOKEN
+      // ==================================================
+
+      const token = generateToken({
+        id: user._id,
+        email: user.email,
+      });
 
       await session.commitTransaction();
 
       return {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-        user_type: user.user_type,
-      };
-    } catch (err: any) {
-      await session.abortTransaction();
-      console.error("❌ REGISTER ERROR:", {
-        name: err.name,
-        message: err.message,
-        code: err.code,
-        keyValue: err.keyValue,
-      });
+        token,
 
-      if (err.code === 11000) {
-        throw new HttpException(409, "Un wallet existe déjà pour cet utilisateur");
-      }
+        user: {
+          id: user._id,
+
+          email: user.email,
+          username: user.username,
+          user_type: user.user_type,
+
+          fname: user.fname,
+          lname: user.lname,
+          phone: user.phone,
+          address: user.address,
+        },
+      };
+    } catch (err) {
+      await session.abortTransaction();
 
       throw err;
     } finally {
@@ -99,22 +121,24 @@ async register(data: {
     }
   }
 
-  // =======================================================
+  // ======================================================
   // LOGIN
-  // =======================================================
+  // ======================================================
 
   async login(email: string, password: string) {
     const cleanEmail = email.trim().toLowerCase();
 
-    const user = await UserModel.findOne({ email: cleanEmail });
+    const user = await UserModel.findOne({
+      email: cleanEmail,
+    }).select("+password");
 
     if (!user) {
       throw new HttpException(401, "Identifiants invalides");
     }
 
-    const ok = await comparePassword(password.trim(), user.password);
+    const isMatch = await comparePassword(password.trim(), user.password);
 
-    if (!ok) {
+    if (!isMatch) {
       throw new HttpException(401, "Identifiants invalides");
     }
 
@@ -125,10 +149,18 @@ async register(data: {
 
     return {
       token,
+
       user: {
         id: user._id,
+
         email: user.email,
         username: user.username,
+        user_type: user.user_type,
+
+        fname: user.fname,
+        lname: user.lname,
+        phone: user.phone,
+        address: user.address,
       },
     };
   }

@@ -11,14 +11,7 @@ import fs from "fs";
 import path from "path";
 import http from "http";
 import https from "https";
-
-
 import {connectDB} from "./data/connectDB"
-
-
-
-
-import { connectDB } from "./data/connectDB";
 import { startTrainPiPolling } from "./pollers/piPoller";
 import { startQrPiPolling } from "./pollers/qrPiPolling";
 
