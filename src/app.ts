@@ -5,6 +5,9 @@ import config from "config";
 import userRoute from "./routes/userRoute";
 import QrCodeRoute from "./routes/QrCodeRoute"
 import iotEventsRoutes from "./routes/iotEventsRoute";
+import purchaseRoute from "./routes/purchaseRoute";
+
+import { errorMiddleware } from "../src/middlewares/errorMiddleWare";
 import c from "config";
 import cors from "cors";
 import bodyParser from 'body-parser';
@@ -64,6 +67,20 @@ const limiter: RateLimitRequestHandler = rateLimit({
 // -----------------------------------------------------------
 app.use(bodyParser.json());
 
+// =====================================================
+// GLOBAL ERROR HANDLER (erreur de login qui  ne doit pas faire planter le serveur a ause du non json)
+// =====================================================
+app.use((err: any, req: any, res: any, next: any) => {
+
+  console.error("GLOBAL ERROR:", err);
+
+  const status = err.status || 500;
+
+  res.status(status).json({
+    message: err.message || "Server error",
+  });
+});
+
 
 
 
@@ -83,6 +100,11 @@ app.use("/api/users", userRoute);
 //QR Code
 app.use('/api/qr-code', QrCodeRoute);
 app.use("/api/iot", iotEventsRoutes);
+
+// Purchase
+app.use("/api/purchases", purchaseRoute);
+
+app.use(errorMiddleware);
 
 
 export default app;
