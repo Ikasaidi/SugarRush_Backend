@@ -5,6 +5,7 @@ import {
 } from "express";
 
 import { UserService } from "../services/UserService";
+import { HttpException } from "../utils/http-exception";
 
 const userService = new UserService();
 
@@ -31,6 +32,33 @@ export class UserController {
       res.status(200).json({
         success: true,
         user,
+      });
+
+    } catch (err) {
+
+      next(err);
+
+    }
+  };
+
+  // ====================================================
+  // GET ALL NON-ADMIN USERS
+  // ====================================================
+
+  getAllNonAdminUsers = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
+    try {
+
+      const users =
+        await userService.getAllNonAdminUsers();
+
+      res.status(200).json({
+        success: true,
+        users,
       });
 
     } catch (err) {
@@ -127,6 +155,41 @@ export class UserController {
   };
 
   // ====================================================
+  // DELETE USER BY ID (ADMIN)
+  // ====================================================
+
+  deleteUserById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
+    try {
+
+      const targetUserId = String(req.params.targetUserId || "");
+
+      if (!targetUserId) {
+        throw new HttpException(
+          400,
+          "L'ID de l'utilisateur à supprimer est requis"
+        );
+      }
+
+      await userService.deleteUser(targetUserId);
+
+      res.status(200).json({
+        success: true,
+        message: "Utilisateur supprimé",
+      });
+
+    } catch (err) {
+
+      next(err);
+
+    }
+  };
+
+  // ====================================================
   // LOGOUT
   // ====================================================
 
@@ -141,6 +204,45 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: "Déconnecté",
+      });
+
+    } catch (err) {
+
+      next(err);
+
+    }
+  };
+
+  // ====================================================
+  // PROMOTE USER TO ADMIN
+  // ====================================================
+
+  promoteToAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+
+    try {
+
+      const { targetUserId } =
+        req.body;
+
+      if (!targetUserId) {
+        throw new HttpException(
+          400,
+          "L'ID de l'utilisateur à promouvoir est requis"
+        );
+      }
+
+      const promotedUser =
+        await userService.promoteToAdmin(
+          targetUserId
+        );
+
+      res.status(200).json({
+        success: true,
+        user: promotedUser,
       });
 
     } catch (err) {

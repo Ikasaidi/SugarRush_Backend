@@ -31,6 +31,28 @@ export class UserService {
   }
 
   // =====================================================
+  // GET ALL NON-ADMIN USERS
+  // =====================================================
+
+  async getAllNonAdminUsers() {
+
+    const users =
+      await UserModel.find({
+        user_type: { $ne: "admin" }
+      }).lean();
+
+    const safeUsers = users.map((user: any) => {
+      const { password, ...safeUser } = user;
+      return {
+        id: user._id,
+        ...safeUser,
+      };
+    });
+
+    return safeUsers;
+  }
+
+  // =====================================================
   // UPDATE USER
   // =====================================================
 
@@ -182,6 +204,45 @@ export class UserService {
 
     return {
       success: true,
+    };
+  }
+
+  // =====================================================
+  // PROMOTE USER TO ADMIN
+  // =====================================================
+
+  async promoteToAdmin(userId: string) {
+
+    const user =
+      await UserModel.findById(userId);
+
+    if (!user) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
+
+    if (user.user_type === "admin") {
+      throw new HttpException(
+        409,
+        "Cet utilisateur est déjà un admin"
+      );
+    }
+
+    user.user_type = "admin";
+    await user.save();
+
+    return {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      user_type: user.user_type,
+      fname: user.fname,
+      lname: user.lname,
+      phone: user.phone,
+      address: user.address,
+      message: "Utilisateur promu en admin avec succès",
     };
   }
 }
