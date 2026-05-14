@@ -12,7 +12,7 @@
     "trustProxy": false
   },
   "db": {
-   "uri": "mongodb+srv://admin:admin123@test.npu9g0a.mongodb.net/GreenHand_test"
+   "uri": "mongodb+srv://admin:testabc123@sugarrushdb.sqml5vq.mongodb.net/sugarRush_test"
   },
     "security": {
       "jwt": { "secret": "test-secret", "expiresIn": "1h" },
