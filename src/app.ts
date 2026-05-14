@@ -6,6 +6,7 @@ import userRoute from "./routes/userRoute";
 import QrCodeRoute from "./routes/QrCodeRoute"
 import iotEventsRoutes from "./routes/iotEventsRoute";
 import purchaseRoute from "./routes/purchaseRoute";
+import walletRoute from "./routes/walletRoute";
 import trainStatusRoutes from "./routes/trainStatusRoutes";
 import trainSchedulesRoutes from "./routes/trainSchedulesRoutes";
 import { errorMiddleware } from "../src/middlewares/errorMiddleWare";
@@ -106,6 +107,9 @@ app.use("/api/train-schedules", trainSchedulesRoutes);
 app.use("/api/train-status", trainStatusRoutes);
 
 app.use("/api/purchases", purchaseRoute);
+
+// Wallet
+app.use("/api/wallet", walletRoute);
 
 app.use(errorMiddleware);
 
