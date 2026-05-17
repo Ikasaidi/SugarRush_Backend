@@ -214,7 +214,7 @@ export class UserService {
   async promoteToAdmin(userId: string) {
 
     const user =
-      await UserModel.findById(userId);
+      await UserModel.findById(userId).lean();
 
     if (!user) {
       throw new HttpException(
@@ -230,18 +230,29 @@ export class UserService {
       );
     }
 
-    user.user_type = "admin";
-    await user.save();
+    const updatedUser =
+      await UserModel.findByIdAndUpdate(
+        userId,
+        { $set: { user_type: "admin" } },
+        { new: true }
+      ).lean();
+
+    if (!updatedUser) {
+      throw new HttpException(
+        404,
+        "Utilisateur introuvable"
+      );
+    }
 
     return {
-      id: user._id,
-      email: user.email,
-      username: user.username,
-      user_type: user.user_type,
-      fname: user.fname,
-      lname: user.lname,
-      phone: user.phone,
-      address: user.address,
+      id: updatedUser._id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      user_type: updatedUser.user_type,
+      fname: updatedUser.fname,
+      lname: updatedUser.lname,
+      phone: updatedUser.phone,
+      address: updatedUser.address,
       message: "Utilisateur promu en admin avec succès",
     };
   }
