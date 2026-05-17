@@ -73,13 +73,32 @@ export class AuthService {
       await user.save({ session });
 
       // ==================================================
+      // FREE TICKETS BY USER TYPE
+      // ==================================================
+
+      let freeTickets = 0;
+
+      switch (data.user_type) {
+        case "student":
+          freeTickets = 2;
+          break;
+
+        case "senior":
+          freeTickets = 4;
+          break;
+
+        default:
+          freeTickets = 0;
+      }
+
+      // ==================================================
       // CREATE WALLET
       // ==================================================
 
       const wallet = new WalletModel({
         user_id: user._id,
 
-        free_ticket_balance: 0,
+        free_ticket_balance: freeTickets,
         paid_ticket_balance: 0,
       });
 
