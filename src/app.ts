@@ -17,7 +17,6 @@ import rateLimit , {RateLimitRequestHandler}from "express-rate-limit";
 
 dotenv.config();
 const app = express();
-app.use(cors());
 app.use(express.json());
 
 
@@ -50,20 +49,23 @@ app.use(cors({
   credentials: true
 }));
 
+
 // -----------------------------------------------------------
 //  RATE LIMITING
 // -----------------------------------------------------------
 const rateConfig = config.get<{
-  windowMs: number;
-  max: number;
+  windowMs: number | string;
+  max: number | string;
 }>("security.rateLimit");
 
+const rateLimitWindowMs = Number(rateConfig.windowMs);
+const rateLimitMax = Number(rateConfig.max);
+
 const limiter: RateLimitRequestHandler = rateLimit({
-  windowMs: rateConfig.windowMs,
-  max: rateConfig.max,
+  windowMs: rateLimitWindowMs,
+  max: rateLimitMax,
   message: "Trop de requêtes, réessayez plus tard.",
 });
-
 // -----------------------------------------------------------
 //  MIDDLEWARE
 // -----------------------------------------------------------

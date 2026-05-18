@@ -5,6 +5,7 @@
   "main": "dist/server.ts",
   "scripts": {
     "dev": "set NODE_ENV=development&& ts-node-dev --respawn src/server.ts",
+    "prod": "set NODE_ENV=production&& ts-node-dev --respawn src/server.ts",
     "build": "tsc && node scripts/copy-data.js",
     "start": "node dist/server.js"
   },

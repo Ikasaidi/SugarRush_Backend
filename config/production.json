@@ -3,9 +3,9 @@
   "server": {
     "http": { "enabled": true, "port": 9696 },
     "https": {
-      "enabled": true,
+      "enabled": false,
       "port": 3443,
-      "redirectAllHttpToHttps": true
+      "redirectAllHttpToHttps": false
     },
     "trustProxy": true
   },

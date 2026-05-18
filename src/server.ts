@@ -29,8 +29,9 @@ console.log(
 // CONFIG SERVEUR (lue depuis config/*)
 // -----------------------------------------------------------
 // Ports + options HTTPS
-const httpPort = config.get<number>("server.http.port");
+const httpPort = Number(process.env.PORT) || config.get<number>("server.http.port");
 const httpsPort = config.get<number>("server.https.port");
+
 const enableHttps =
   config.get<boolean>("server.https.enabled") === true ||
   config.get("server.https.enabled") === "true";
