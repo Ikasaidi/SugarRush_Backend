@@ -13,7 +13,7 @@
     // "target": "ES2020",
 
     // Types are loaded automatically from dependencies
-    // "types": ["jest", "node"],
+    "types": ["node"],
     // For nodejs:
     // "lib": ["esnext"],
     // and npm install -D @types/node
