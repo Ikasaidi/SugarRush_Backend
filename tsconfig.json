@@ -40,6 +40,7 @@
 
     // Recommended Options
     "strict": true,
+    "noImplicitAny": false,
     "skipLibCheck": true
     // "jsx": "react-jsx",
     // "verbatimModuleSyntax": true,
