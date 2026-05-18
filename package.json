@@ -4,8 +4,8 @@
   "description": "",
   "main": "dist/server.ts",
   "scripts": {
-    "dev": "set NODE_ENV=development&& ts-node-dev --respawn src/server.ts",
-    "prod": "set NODE_ENV=production&& ts-node-dev --respawn src/server.ts",
+    "dev": "NODE_ENV=development&& ts-node-dev --respawn src/server.ts",
+    "prod": "cross-env NODE_ENV=production ts-node src/server.ts",
     "build": "tsc && node scripts/copy-data.js",
     "start": "node dist/server.js"
   },
@@ -14,6 +14,7 @@
     "bcrypt": "^6.0.0",
     "config": "^4.2.0",
     "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
