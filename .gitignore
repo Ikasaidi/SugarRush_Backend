@@ -12,6 +12,25 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Environnement local - Ne jamais committer les fichiers .env avec des valeurs réelles!
+.env
+.env.local
+.env.*.local
+.env.production
+.env.test
+.env.development
+
+# Note: Les fichiers config/*.json peuvent maintenant être commités 
+# car ils utilisent des variables d'environnement au lieu de valeurs en dur
+
+# Certificats / clés locales - Ne pas committer les certificats!
+*.pem
+cert/*
+!cert/.gitkeep
+
+# Postman export
+postman/*.json
+
 # Cache et données temporaires
 .DS_Store
 .idea/
@@ -19,15 +38,15 @@ yarn-error.log*
 .tmp/
 .sass-cache/
 
-# Certificats
-*.pem 
-cert/*
-!cert/.gitkeep
+# Fichiers de test coverage (si vous utilisez Jest pour le rapport de couverture)
+coverage/
 
 # TypeScript build info
 *.tsbuildinfo
 
 # Configurations système
 *.swp
+
 *.csr
+
 /venv
