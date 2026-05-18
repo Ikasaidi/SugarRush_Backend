@@ -19,6 +19,7 @@
     // and npm install -D @types/node
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
 
     // Other Outputs
     "sourceMap": true,

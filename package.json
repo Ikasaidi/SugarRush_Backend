@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development ts-node-dev --respawn src/server.ts",
-    "build": "tsc && node scripts/copy-data.js",
+    "build": "tsc",
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "prod": "npm run start"
   },

@@ -9,7 +9,7 @@ import purchaseRoute from "./routes/purchaseRoute";
 import walletRoute from "./routes/walletRoute";
 import trainStatusRoutes from "./routes/trainStatusRoutes";
 import trainSchedulesRoutes from "./routes/trainSchedulesRoutes";
-import { errorMiddleware } from "../src/middlewares/errorMiddleWare";
+import { errorMiddleware } from "./middlewares/errorMiddleWare";
 import c from "config";
 import cors from "cors";
 import bodyParser from 'body-parser';
