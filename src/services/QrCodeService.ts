@@ -15,6 +15,18 @@ interface IValidateQrCodeResult {
   usedTicketType?: "free" | "paid";
   remaining_free_tickets?: number;
   remaining_paid_tickets?: number;
+  remainingFreeTickets?: number;
+  remainingPaidTickets?: number;
+  wallet?: {
+    free_ticket_balance: number;
+    paid_ticket_balance: number;
+  };
+}
+
+function normalizeTicketBalance(value: unknown): number {
+  const balance = Number(value);
+
+  return Number.isFinite(balance) && balance > 0 ? balance : 0;
 }
 
 export const generateQRCode = async (data: string): Promise<string> => {
@@ -137,6 +149,9 @@ export const validateScannedQr = async (
     paid_ticket_balance: wallet.paid_ticket_balance,
   });
 
+  wallet.free_ticket_balance = normalizeTicketBalance(wallet.free_ticket_balance);
+  wallet.paid_ticket_balance = normalizeTicketBalance(wallet.paid_ticket_balance);
+
   let usedTicketType: "free" | "paid" | undefined;
 
   if (wallet.free_ticket_balance > 0) {
@@ -159,6 +174,12 @@ export const validateScannedQr = async (
       message: "Not enough tickets",
       remaining_free_tickets: wallet.free_ticket_balance,
       remaining_paid_tickets: wallet.paid_ticket_balance,
+      remainingFreeTickets: wallet.free_ticket_balance,
+      remainingPaidTickets: wallet.paid_ticket_balance,
+      wallet: {
+        free_ticket_balance: wallet.free_ticket_balance,
+        paid_ticket_balance: wallet.paid_ticket_balance,
+      },
     };
   }
 
@@ -180,5 +201,11 @@ export const validateScannedQr = async (
     usedTicketType,
     remaining_free_tickets: wallet.free_ticket_balance,
     remaining_paid_tickets: wallet.paid_ticket_balance,
+    remainingFreeTickets: wallet.free_ticket_balance,
+    remainingPaidTickets: wallet.paid_ticket_balance,
+    wallet: {
+      free_ticket_balance: wallet.free_ticket_balance,
+      paid_ticket_balance: wallet.paid_ticket_balance,
+    },
   };
 };

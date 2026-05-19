@@ -4,5 +4,5 @@ export const trainRuntimeState = {
   lastStartedAt: null as Date | null,
   lastStoppedAt: null as Date | null,
   lastKnownStation: "station-2" as string,
-  serviceStatus: "offline" as "running" | "stopped" | "offline" | "paused",
+  serviceStatus: "stopped" as "running" | "stopped" | "offline" | "paused",
 };

@@ -57,6 +57,9 @@ export class PurchaseService {
         paid_ticket_balance: quantity,
       });
     } else {
+      wallet.free_ticket_balance = Number(wallet.free_ticket_balance) || 0;
+      wallet.paid_ticket_balance = Number(wallet.paid_ticket_balance) || 0;
+
       // -----------------------------
       // UPDATE PAID TICKETS
       // -----------------------------

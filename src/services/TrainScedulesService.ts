@@ -29,6 +29,31 @@ export class TrainSchedulesService {
     });
   }
 
+  async getSchedulesByStation(station: string) {
+    return TrainSchedulesModel.find({
+      $or: [
+        { departure_station: station },
+        { arrival_station: station },
+      ],
+    }).sort({ departure_time: -1 });
+  }
+
+  async getUpcomingSchedulesByStation(station: string) {
+    const ARRIVAL_GRACE_MS = 10 * 1000;
+
+    return TrainSchedulesModel.find({
+      $or: [
+        { departure_station: station },
+        { arrival_station: station },
+      ],
+      arrival_time: {
+        $gte: new Date(Date.now() - ARRIVAL_GRACE_MS),
+      },
+    })
+      .sort({ departure_time: 1 })
+      .limit(6);
+  }
+
   async getUpcomingSchedules() {
   const ARRIVAL_GRACE_MS = 10 * 1000;
 

@@ -17,6 +17,16 @@ router.get(
 );
 
 router.get(
+  "/upcoming/:station",
+  trainSchedulesController.getUpcomingSchedulesByStation
+);
+
+router.get(
+  "/station/:station",
+  trainSchedulesController.getSchedulesByStation
+);
+
+router.get(
   "/train/:trainId",
   trainSchedulesController.getSchedulesByTrain
 );

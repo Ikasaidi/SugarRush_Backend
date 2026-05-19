@@ -27,6 +27,20 @@ export class TrainSchedulesController {
     }
   };
 
+  getSchedulesByStation = async (
+    req: Request<{ station: string }>,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const { station } = req.params;
+      const schedules = await trainSchedulesService.getSchedulesByStation(station);
+      return res.status(200).json(schedules);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getUpcomingSchedules = async (
     req: Request,
     res: Response,
@@ -34,6 +48,20 @@ export class TrainSchedulesController {
   ) => {
     try {
       const schedules = await trainSchedulesService.getUpcomingSchedules();
+      return res.status(200).json(schedules);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getUpcomingSchedulesByStation = async (
+    req: Request<{ station: string }>,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const { station } = req.params;
+      const schedules = await trainSchedulesService.getUpcomingSchedulesByStation(station);
       return res.status(200).json(schedules);
     } catch (error) {
       next(error);
