@@ -1,7 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import { PurchaseService } from "../services/purchaseService";
 
-const purchaseService = new PurchaseService();
+// ====================== SINGLETON + INJECTION POUR TESTS ======================
+let purchaseServiceInstance: PurchaseService | null = null;
+
+const getPurchaseService = () => {
+  if (!purchaseServiceInstance) {
+    purchaseServiceInstance = new PurchaseService();
+  }
+  return purchaseServiceInstance;
+};
+
+export function setPurchaseServiceForTesting(service: PurchaseService) {
+  purchaseServiceInstance = service;
+}
+// =============================================================================
 
 export class PurchaseController {
 
@@ -15,11 +28,10 @@ export class PurchaseController {
   ) {
 
     try {
-
-      // USER FROM TOKEN
+      // USER FROM TOKEN (ajouté par le middleware d'authentification)
       const user = (req as any).user;
 
-      const result = await purchaseService.purchaseTickets({
+      const result = await getPurchaseService().purchaseTickets({
         user_id: user.id,
         quantity: req.body.quantity,
         unit_price: req.body.unit_price,
@@ -43,12 +55,10 @@ export class PurchaseController {
   ) {
 
     try {
-
       // USER FROM TOKEN
       const user = (req as any).user;
 
-      const purchases =
-        await purchaseService.getPurchaseHistory(user.id);
+      const purchases = await getPurchaseService().getPurchaseHistory(user.id);
 
       res.status(200).json(purchases);
 
@@ -57,35 +67,3 @@ export class PurchaseController {
     }
   }
 }
-
-
-// USER.ID
-
-// import { Request, Response, NextFunction } from "express";
-// import { PurchaseService } from "../services/purchaseService";
-
-// const purchaseService = new PurchaseService();
-
-// export class PurchaseController {
-
-//   async purchaseTickets(
-//     req: Request,
-//     res: Response,
-//     next: NextFunction
-//   ) {
-//     try {
-
-//       const result = await purchaseService.purchaseTickets({
-//         user_id: req.body.user_id,
-//         quantity: req.body.quantity,
-//         unit_price: req.body.unit_price,
-//         currency: req.body.currency,
-//       });
-
-//       res.status(201).json(result);
-
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// }

@@ -6,7 +6,18 @@ import {
 
 import { AuthService } from "../services/authService";
 
-const authService = new AuthService();
+let authService: AuthService | null = null;
+
+function getAuthService() {
+  if (!authService) {
+    authService = new AuthService();
+  }
+  return authService;
+}
+
+export function setAuthServiceForTesting(service: AuthService) {
+  authService = service;
+}
 
 export class AuthController {
 
@@ -34,7 +45,7 @@ export class AuthController {
       } = req.body;
 
       const result =
-        await authService.register({
+        await getAuthService().register({
           email,
           username,
           password,
@@ -75,7 +86,7 @@ export class AuthController {
       } = req.body;
 
       const result =
-        await authService.login(
+        await getAuthService().login(
           email,
           password
         );
