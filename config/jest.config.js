@@ -9,5 +9,18 @@ module.exports = {
     "<rootDir>/src/**/*.spec.ts",
   ],
   moduleFileExtensions: ["ts", "js", "json"],
+  collectCoverage: true,
   collectCoverageFrom: ["<rootDir>/src/**/*.ts"],
+  coverageDirectory: "<rootDir>/coverage",
+  coverageReporters: ["text", "lcov", "html"],
+
+  coveragePathIgnorePatterns: [
+  "/node_modules/",
+  "/dist/",
+  "/src/scripts/",
+  "/src/pollers/",
+  "/src/data/",
+  "/src/config/",
+  "/src/server.ts",
+]
 };
